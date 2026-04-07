@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive browser demo of BIKE (Bit Flipping Key Encapsulation) — a code-based post-quantum KEM and NIST Round 4 alternate candidate." />
+  <title>BIKE Vault — Post-Quantum Code-Based KEM Demo</title>
+  <script type="module" crossorigin src="/crypto-lab-bike-vault/assets/index-ZDUtbr1N.js"></script>
+  <link rel="stylesheet" crossorigin href="/crypto-lab-bike-vault/assets/index-Cv37ZS2m.css">
+</head>
+<body>
+  <!-- Skip link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Header -->
+  <header class="site-header" role="banner">
+    <div class="header-top">
+      <div class="header-left">
+        <span class="category-chip" aria-label="Category: Post-Quantum KEM">Post-Quantum KEM</span>
+        <h1 class="site-title">BIKE Vault</h1>
+        <p class="site-subtitle">Bit Flipping Key Encapsulation — Code-Based Post-Quantum Cryptography</p>
+      </div>
+      <div class="header-right">
+        <button
+          id="theme-toggle"
+          class="theme-toggle"
+          type="button"
+          aria-label="Switch to light mode"
+          title="Toggle dark/light mode"
+        >
+          <span class="theme-icon" aria-hidden="true">🌙</span>
+        </button>
+      </div>
+    </div>
+    <div class="primitive-chips" aria-label="Cryptographic primitives used">
+      <span class="chip">BIKE</span>
+      <span class="chip">QC-MDPC</span>
+      <span class="chip">AES-256-GCM</span>
+      <span class="chip">Code-Based</span>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main id="main-content" role="main">
+    <!-- Why this matters -->
+    <section class="why-banner" aria-label="Why this matters">
+      <p><strong>Why this matters:</strong> ML-KEM (Kyber) is the NIST-standardized post-quantum KEM, but <em>cryptographic diversity</em> matters. BIKE offers an alternative based on error-correcting codes — a mathematical family with 45+ years of cryptanalysis. If lattice assumptions break, code-based crypto survives.</p>
+    </section>
+
+    <!-- Panel navigation -->
+    <nav class="panel-nav" role="tablist" aria-label="Demo panels">
+      <button class="panel-tab active" data-panel="panel-1" aria-selected="true" role="tab" aria-controls="panel-1" id="tab-1">
+        <span class="tab-number">1</span> Code Primer
+      </button>
+      <button class="panel-tab" data-panel="panel-2" aria-selected="false" role="tab" aria-controls="panel-2" id="tab-2">
+        <span class="tab-number">2</span> Key Gen
+      </button>
+      <button class="panel-tab" data-panel="panel-3" aria-selected="false" role="tab" aria-controls="panel-3" id="tab-3">
+        <span class="tab-number">3</span> Encap / Decap
+      </button>
+      <button class="panel-tab" data-panel="panel-4" aria-selected="false" role="tab" aria-controls="panel-4" id="tab-4">
+        <span class="tab-number">4</span> BIKE vs ML-KEM
+      </button>
+      <button class="panel-tab" data-panel="panel-5" aria-selected="false" role="tab" aria-controls="panel-5" id="tab-5">
+        <span class="tab-number">5</span> Why It Matters
+      </button>
+    </nav>
+
+    <!-- Panel 1: Code-Based Cryptography Primer -->
+    <section id="panel-1" class="panel active" role="tabpanel" aria-labelledby="tab-1">
+      <h2>Code-Based Cryptography Primer</h2>
+
+      <div class="card">
+        <h3>Error-Correcting Codes: The Foundation</h3>
+        <p>Error-correcting codes (ECCs) allow a sender to encode data so that a receiver can detect and <em>correct</em> errors introduced during transmission. Cryptographers discovered that the <strong>difficulty of decoding a random linear code</strong> can be used as the basis for a public-key cryptosystem.</p>
+        <p>The idea: the private key is a structured code that's easy to decode. The public key disguises this structure so that decoding looks like solving a hard problem for anyone without the private key.</p>
+      </div>
+
+      <div class="card">
+        <h3>Simple Parity Check Example</h3>
+        <p>A parity check matrix <strong>H</strong> defines which bit patterns are valid codewords. If a received word <strong>r</strong> satisfies <code>H · r = 0</code>, it's valid. Otherwise, the non-zero result (the <em>syndrome</em>) reveals where errors occurred.</p>
+        <div class="demo-box" aria-label="Interactive parity check example">
+          <div class="parity-demo">
+            <label for="parity-input">Enter 4-bit message:</label>
+            <input type="text" id="parity-input" maxlength="4" placeholder="1011" pattern="[01]{4}" class="mono-input" aria-describedby="parity-help" />
+            <span id="parity-help" class="help-text">Enter exactly 4 binary digits (0 or 1)</span>
+            <button id="parity-encode-btn" class="btn btn-primary" aria-label="Encode message with parity check">Encode</button>
+          </div>
+          <div id="parity-output" class="output-box" aria-live="polite" role="status"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>QC-MDPC Codes</h3>
+        <p><strong>Quasi-Cyclic Moderate-Density Parity-Check</strong> (QC-MDPC) codes are the mathematical backbone of BIKE.</p>
+        <ul>
+          <li><strong>Quasi-Cyclic (QC):</strong> The parity check matrix H is built from circulant blocks — each block is fully determined by its first row, which is cyclically shifted to fill the remaining rows. This gives compact key representation.</li>
+          <li><strong>Moderate-Density Parity-Check (MDPC):</strong> H is sparse but not as sparse as classical LDPC codes. The row weight <em>w</em> is roughly O(√n), providing a balance between decodability and security.</li>
+          <li><strong>Structure:</strong> H = [H₀ | H₁] where H₀ and H₁ are r×r circulant matrices, each defined by a single row polynomial of weight w/2.</li>
+        </ul>
+        <div class="visual-box" aria-label="Visual representation of QC-MDPC parity check matrix structure">
+          <div class="matrix-visual">
+            <div class="matrix-label">H =</div>
+            <div class="matrix-bracket">[</div>
+            <div class="matrix-block" aria-label="H₀: r×r circulant block">
+              <span class="block-label">H₀</span>
+              <span class="block-desc">r × r circulant</span>
+            </div>
+            <div class="matrix-divider">|</div>
+            <div class="matrix-block" aria-label="H₁: r×r circulant block">
+              <span class="block-label">H₁</span>
+              <span class="block-desc">r × r circulant</span>
+            </div>
+            <div class="matrix-bracket">]</div>
+          </div>
+          <p class="visual-caption"><strong>BIKE-1 (Level 1):</strong> r = 12,323 — each circulant block defined by a row of weight w/2 = 71</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>The LPN Hardness Assumption</h3>
+        <p>BIKE's security rests on the <strong>Learning Parity with Noise (LPN)</strong> problem — specifically, the difficulty of decoding a random quasi-cyclic code. Given a random syndrome <code>s = H · e</code> where <strong>e</strong> is a sparse error vector, recovering <strong>e</strong> is believed to be hard even for quantum computers.</p>
+        <p>This is related to the <strong>Syndrome Decoding Problem</strong>, which has been studied since the 1960s and is NP-hard in the worst case.</p>
+      </div>
+
+      <div class="card bridge-card">
+        <h3>From Codes to Key Encapsulation</h3>
+        <p>BIKE builds a <strong>Key Encapsulation Mechanism (KEM)</strong> on top of QC-MDPC codes. The private key holder knows the sparse structure of H and can decode efficiently. Everyone else faces a hard decoding problem. Next: let's generate a BIKE keypair.</p>
+        <button class="btn btn-primary next-panel-btn" data-next="panel-2" aria-label="Continue to Panel 2: BIKE Key Generation">Continue to Key Generation →</button>
+      </div>
+    </section>
+
+    <!-- Panel 2: BIKE Key Generation -->
+    <section id="panel-2" class="panel" role="tabpanel" aria-labelledby="tab-2" hidden>
+      <h2>BIKE Key Generation</h2>
+
+      <div class="card">
+        <div class="status-chip-row">
+          <span class="status-chip status-round4" aria-label="NIST Status: Round 4 Alternate Candidate">NIST Round 4 Alternate</span>
+          <span class="status-chip status-sim" aria-label="Simulation status: Illustrative, not production BIKE">⚠ Illustrative — not production BIKE</span>
+        </div>
+        <p>BIKE key generation produces a keypair using QC-MDPC code structure. We use <strong>BIKE-1 (Level 1)</strong> parameters for speed in the browser.</p>
+        <div class="param-table-wrapper">
+          <table class="param-table" aria-label="BIKE parameter sets from NIST Round 4 submission">
+            <caption>BIKE Parameter Sets (NIST Round 4 Submission Spec)</caption>
+            <thead>
+              <tr>
+                <th scope="col">Parameter Set</th>
+                <th scope="col">Security Level</th>
+                <th scope="col">r (block size)</th>
+                <th scope="col">w (row weight)</th>
+                <th scope="col">t (error weight)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight-row">
+                <td><strong>BIKE-1</strong></td>
+                <td>Level 1</td>
+                <td>12,323</td>
+                <td>142</td>
+                <td>134</td>
+              </tr>
+              <tr>
+                <td>BIKE-3</td>
+                <td>Level 3</td>
+                <td>24,659</td>
+                <td>206</td>
+                <td>199</td>
+              </tr>
+              <tr>
+                <td>BIKE-5</td>
+                <td>Level 5</td>
+                <td>40,973</td>
+                <td>274</td>
+                <td>264</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="cite">Source: <a href="https://bikesuite.org" target="_blank" rel="noopener">BIKE Specification, NIST Round 4 Submission</a></p>
+      </div>
+
+      <div class="card">
+        <h3>Generate BIKE-1 Keypair</h3>
+        <button id="keygen-btn" class="btn btn-primary btn-large" aria-label="Generate BIKE-1 key pair">Generate Keypair</button>
+        <div id="keygen-output" class="output-area" aria-live="polite" role="status">
+          <p class="placeholder-text">Press "Generate Keypair" to create a BIKE-1 key pair.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Key Structure</h3>
+        <div class="key-explainer">
+          <div class="key-box">
+            <h4>Private Key</h4>
+            <p>A pair of sparse polynomials <strong>(h₀, h₁)</strong> in the ring F₂[x]/(x<sup>r</sup> − 1), each of weight w/2 = 71.</p>
+            <p>These define the sparse rows of the QC-MDPC parity check matrix H = [H₀ | H₁].</p>
+          </div>
+          <div class="key-box">
+            <h4>Public Key</h4>
+            <p>A single polynomial <strong>h = h₀⁻¹ · h₁ mod (x<sup>r</sup> − 1)</strong>.</p>
+            <p>This is the systematic form of the code — knowing h without the sparse factorization doesn't help decode.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Key Size Comparison</h3>
+        <div class="size-comparison" aria-label="Key size comparison between BIKE, ML-KEM, and RSA">
+          <div class="size-bar-group">
+            <div class="size-bar-label">BIKE-1 Public Key</div>
+            <div class="size-bar" style="--bar-pct: 25%;" aria-label="1,541 bytes">
+              <span class="size-bar-fill bike-fill"></span>
+              <span class="size-value">1,541 B</span>
+            </div>
+          </div>
+          <div class="size-bar-group">
+            <div class="size-bar-label">ML-KEM-512 Public Key</div>
+            <div class="size-bar" style="--bar-pct: 13%;" aria-label="800 bytes">
+              <span class="size-bar-fill mlkem-fill"></span>
+              <span class="size-value">800 B</span>
+            </div>
+          </div>
+          <div class="size-bar-group">
+            <div class="size-bar-label">RSA-2048 Public Key</div>
+            <div class="size-bar" style="--bar-pct: 4%;" aria-label="256 bytes">
+              <span class="size-bar-fill rsa-fill"></span>
+              <span class="size-value">256 B</span>
+            </div>
+          </div>
+          <div class="size-bar-group">
+            <div class="size-bar-label">Classic McEliece Public Key</div>
+            <div class="size-bar" style="--bar-pct: 100%;" aria-label="261,120 bytes">
+              <span class="size-bar-fill mceliece-fill"></span>
+              <span class="size-value">261,120 B</span>
+            </div>
+          </div>
+        </div>
+        <p class="note">BIKE achieves much smaller keys than Classic McEliece while staying in the same code-based security family. ML-KEM has the smallest keys overall. RSA-2048 is not post-quantum secure.</p>
+      </div>
+
+      <div class="card bridge-card">
+        <p>Keys generated. Now let's use them to encapsulate and share a secret.</p>
+        <button class="btn btn-primary next-panel-btn" data-next="panel-3" aria-label="Continue to Panel 3: Encapsulation and Decapsulation">Continue to Encap / Decap →</button>
+      </div>
+    </section>
+
+    <!-- Panel 3: Encapsulation and Decapsulation -->
+    <section id="panel-3" class="panel" role="tabpanel" aria-labelledby="tab-3" hidden>
+      <h2>Encapsulation &amp; Decapsulation</h2>
+
+      <div class="card">
+        <div class="status-chip-row">
+          <span class="status-chip status-sim" aria-label="Simulation status: Illustrative, not production BIKE">⚠ Illustrative — not production BIKE</span>
+        </div>
+        <h3>KEM Flow: Alice → Bob</h3>
+        <ol class="kem-flow-list">
+          <li><strong>Alice encapsulates:</strong> Using Bob's public key, generates a random error vector <strong>e</strong> of weight t = 134, computes ciphertext <strong>c = e · [1 | h]ᵀ</strong> and derives shared secret <strong>K</strong> from e.</li>
+          <li><strong>Bob decapsulates:</strong> Using his private key (h₀, h₁), computes syndrome <strong>s = H · cᵀ</strong>, then applies the <strong>Black-Gray-Flip (BGF) decoder</strong> to recover <strong>e</strong>, and derives the same K.</li>
+          <li><strong>Shared secret match:</strong> K<sub>Alice</sub> = K<sub>Bob</sub> — used to key a symmetric cipher.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>The Black-Gray-Flip Decoder</h3>
+        <p>BIKE uses the <strong>Black-Gray-Flip (BGF)</strong> bit-flipping decoder for decapsulation:</p>
+        <ol>
+          <li><strong>Compute syndrome:</strong> s = H · cᵀ — reveals the error pattern</li>
+          <li><strong>Classify bits:</strong> Count how many unsatisfied parity checks each bit participates in. Bits exceeding a threshold T are "Black" (high confidence errors), those near T are "Gray" (uncertain).</li>
+          <li><strong>Flip Black bits</strong> in the first iteration — these are almost certainly errors.</li>
+          <li><strong>Subsequent iterations:</strong> Flip both Black and Gray bits, recompute syndrome, repeat.</li>
+          <li><strong>Convergence:</strong> When syndrome reaches zero, the error vector is recovered.</li>
+        </ol>
+        <p class="note"><strong>Decapsulation Failure Rate (DFR):</strong> BIKE has a non-zero DFR — the decoder may fail to converge for some error patterns. For BIKE-1 (Level 1), DFR &lt; 2<sup>−128</sup>. This is low enough for most applications but means BIKE is not suitable for protocols requiring <em>perfect correctness</em> (zero DFR). ML-KEM has DFR &lt; 2<sup>−139</sup> which is essentially negligible.</p>
+      </div>
+
+      <div class="card">
+        <h3>Try It: Encapsulate &amp; Decapsulate</h3>
+        <div id="encap-prereq" class="prereq-notice" role="alert">
+          <p>⚠ Generate a keypair in <button class="link-btn" data-next="panel-2" aria-label="Go to Panel 2 to generate keypair">Panel 2</button> first.</p>
+        </div>
+        <div id="encap-controls" class="encap-section" style="display:none;">
+          <button id="encap-btn" class="btn btn-primary btn-large" aria-label="Encapsulate: generate shared secret and ciphertext">Encapsulate (Alice)</button>
+          <div id="encap-output" class="output-area" aria-live="polite" role="status"></div>
+
+          <button id="decap-btn" class="btn btn-secondary btn-large" disabled aria-label="Decapsulate: recover shared secret from ciphertext">Decapsulate (Bob)</button>
+          <div id="decap-output" class="output-area" aria-live="polite" role="status"></div>
+
+          <div id="kem-match" class="match-indicator" aria-live="assertive" role="status" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>End-to-End: KEM + AES-256-GCM</h3>
+        <div id="aes-prereq" class="prereq-notice" role="alert" style="display:none;">
+          <p>⚠ Complete encapsulation and decapsulation above first.</p>
+        </div>
+        <div id="aes-section" style="display:none;">
+          <p>The shared secret K is now used as a symmetric key for <strong>AES-256-GCM</strong> encryption via the Web Crypto API.</p>
+          <div class="aes-demo">
+            <label for="aes-plaintext">Message to encrypt:</label>
+            <input type="text" id="aes-plaintext" class="text-input" placeholder="Hello, post-quantum world!" aria-describedby="aes-help" />
+            <span id="aes-help" class="help-text">Enter a message to encrypt with the shared secret</span>
+            <button id="aes-encrypt-btn" class="btn btn-primary" aria-label="Encrypt message with AES-256-GCM using BIKE shared secret">Encrypt</button>
+            <div id="aes-output" class="output-area" aria-live="polite" role="status"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bridge-card">
+        <p>BIKE + AES-256-GCM provides a complete post-quantum secure channel. But how does BIKE compare to the standardized ML-KEM?</p>
+        <button class="btn btn-primary next-panel-btn" data-next="panel-4" aria-label="Continue to Panel 4: BIKE vs ML-KEM comparison">Continue to Comparison →</button>
+      </div>
+    </section>
+
+    <!-- Panel 4: BIKE vs ML-KEM Comparison -->
+    <section id="panel-4" class="panel" role="tabpanel" aria-labelledby="tab-4" hidden>
+      <h2>BIKE vs ML-KEM Comparison</h2>
+
+      <div class="card">
+        <h3>Side-by-Side: Key Sizes, Ciphertext, Performance</h3>
+        <div class="comparison-table-wrapper">
+          <table class="comparison-table" aria-label="BIKE vs ML-KEM comparison across security levels">
+            <caption>BIKE vs ML-KEM — Published Specification Data</caption>
+            <thead>
+              <tr>
+                <th scope="col">Property</th>
+                <th scope="col">BIKE-1</th>
+                <th scope="col">ML-KEM-512</th>
+                <th scope="col">BIKE-3</th>
+                <th scope="col">ML-KEM-768</th>
+                <th scope="col">BIKE-5</th>
+                <th scope="col">ML-KEM-1024</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Security Level</th>
+                <td>1</td><td>1</td><td>3</td><td>3</td><td>5</td><td>5</td>
+              </tr>
+              <tr>
+                <th scope="row">Public Key (bytes)</th>
+                <td>1,541</td><td>800</td><td>3,083</td><td>1,184</td><td>5,122</td><td>1,568</td>
+              </tr>
+              <tr>
+                <th scope="row">Ciphertext (bytes)</th>
+                <td>1,573</td><td>768</td><td>3,115</td><td>1,088</td><td>5,154</td><td>1,568</td>
+              </tr>
+              <tr>
+                <th scope="row">Shared Secret (bytes)</th>
+                <td>32</td><td>32</td><td>32</td><td>32</td><td>32</td><td>32</td>
+              </tr>
+              <tr>
+                <th scope="row">Security Assumption</th>
+                <td colspan="2">QC-MDPC Decoding</td>
+                <td colspan="2">QC-MDPC Decoding</td>
+                <td colspan="2">QC-MDPC Decoding</td>
+              </tr>
+              <tr>
+                <th scope="row">&nbsp;</th>
+                <td class="vs-cell">vs</td><td>Module-LWE</td>
+                <td class="vs-cell">vs</td><td>Module-LWE</td>
+                <td class="vs-cell">vs</td><td>Module-LWE</td>
+              </tr>
+              <tr>
+                <th scope="row">Decap Failure Rate</th>
+                <td>&lt; 2<sup>−128</sup></td><td>&lt; 2<sup>−139</sup></td>
+                <td>&lt; 2<sup>−192</sup></td><td>&lt; 2<sup>−164</sup></td>
+                <td>&lt; 2<sup>−256</sup></td><td>&lt; 2<sup>−174</sup></td>
+              </tr>
+              <tr>
+                <th scope="row">NIST Status</th>
+                <td><span class="status-chip status-round4">Round 4 Alt</span></td>
+                <td><span class="status-chip status-standard">Standardized</span></td>
+                <td><span class="status-chip status-round4">Round 4 Alt</span></td>
+                <td><span class="status-chip status-standard">Standardized</span></td>
+                <td><span class="status-chip status-round4">Round 4 Alt</span></td>
+                <td><span class="status-chip status-standard">Standardized</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="cite">Sources: <a href="https://bikesuite.org" target="_blank" rel="noopener">BIKE Spec</a>, <a href="https://pq-crystals.org/kyber/" target="_blank" rel="noopener">CRYSTALS-Kyber / ML-KEM Spec (FIPS 203)</a></p>
+      </div>
+
+      <div class="card">
+        <h3>Visual: Public Key + Ciphertext Sizes</h3>
+        <div id="compare-chart" class="chart-area" aria-label="Bar chart comparing public key and ciphertext sizes between BIKE and ML-KEM" role="img">
+          <!-- Rendered by compare.ts -->
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Security Assumption Diversity</h3>
+        <div class="diversity-grid">
+          <div class="diversity-box">
+            <h4>ML-KEM (Lattice-Based)</h4>
+            <p>Built on the <strong>Module Learning With Errors (Module-LWE)</strong> problem. Lattice problems are relatively new in cryptography (studied since ~1996). ML-KEM is the NIST standard — the recommended default.</p>
+            <span class="status-chip status-standard">Recommended Default</span>
+          </div>
+          <div class="diversity-box">
+            <h4>BIKE (Code-Based)</h4>
+            <p>Built on the <strong>Syndrome Decoding / QC-MDPC Decoding</strong> problem. Code-based cryptography dates to McEliece (1978) — the oldest post-quantum proposal still unbroken. BIKE provides <em>algorithmic diversity</em>.</p>
+            <span class="status-chip status-round4">Diversity Use Cases</span>
+          </div>
+        </div>
+        <p class="note"><strong>Key tradeoff:</strong> BIKE has much smaller keys than Classic McEliece (the other code-based candidate) but has a non-zero decapsulation failure rate, unlike ML-KEM's essentially negligible DFR. For protocols requiring perfect correctness, ML-KEM is the better choice.</p>
+      </div>
+
+      <div class="card bridge-card">
+        <p>Both KEMs have their place. Let's explore why code-based post-quantum crypto matters for the future.</p>
+        <button class="btn btn-primary next-panel-btn" data-next="panel-5" aria-label="Continue to Panel 5: Why Code-Based PQ Matters">Continue to Why It Matters →</button>
+      </div>
+    </section>
+
+    <!-- Panel 5: Why Code-Based PQ Matters -->
+    <section id="panel-5" class="panel" role="tabpanel" aria-labelledby="tab-5" hidden>
+      <h2>Why Code-Based Post-Quantum Crypto Matters</h2>
+
+      <div class="card">
+        <h3>Cryptographic Diversity</h3>
+        <p>The NIST post-quantum standardization process selected ML-KEM (lattice-based) as the primary KEM standard. But the process also advanced <strong>code-based</strong> and <strong>isogeny-based</strong> alternatives because <em>no single mathematical assumption should be a single point of failure</em>.</p>
+        <p>If a breakthrough attack against lattice problems emerges, code-based schemes like BIKE and Classic McEliece would remain secure — and vice versa. This is the <strong>cryptographic diversity argument</strong>.</p>
+      </div>
+
+      <div class="card">
+        <h3>45+ Years of Cryptanalysis</h3>
+        <p>Robert McEliece proposed the first code-based public-key cryptosystem in <strong>1978</strong> — making it the oldest post-quantum proposal still considered secure. The core hardness assumption (syndrome decoding) has withstood decades of cryptanalytic effort.</p>
+        <ul>
+          <li><strong>1978:</strong> McEliece cryptosystem proposed (Goppa codes)</li>
+          <li><strong>1986:</strong> Niederreiter dual formulation</li>
+          <li><strong>2013:</strong> Misoczki et al. propose MDPC-McEliece — precursor to BIKE</li>
+          <li><strong>2017:</strong> BIKE submitted to NIST PQC competition</li>
+          <li><strong>2022:</strong> BIKE advances to NIST Round 4</li>
+          <li><strong>2024–2026:</strong> BIKE under active evaluation for potential standardization</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>BIKE's Role in the PQ Landscape</h3>
+        <p>BIKE occupies a specific niche in the post-quantum ecosystem:</p>
+        <ul>
+          <li><strong>Compact alternative to Classic McEliece:</strong> Public keys ~1.5 KB vs ~261 KB at Level 1</li>
+          <li><strong>Same mathematical family:</strong> Both rely on the hardness of decoding random codes</li>
+          <li><strong>Tradeoff:</strong> BIKE has non-zero DFR; Classic McEliece has zero DFR but enormous keys</li>
+          <li><strong>Use cases:</strong> Where ML-KEM is primary but code-based diversity is desired as a backup or in hybrid constructions</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Why This Matters in 2026+</h3>
+        <p>Post-quantum migration is underway across the internet. The critical lesson from decades of cryptographic history:</p>
+        <blockquote>
+          <p><strong>Don't put all your eggs in one mathematical basket.</strong></p>
+        </blockquote>
+        <p>ML-KEM should be the default choice for most deployments. But organizations with long-term security requirements should consider <strong>hybrid approaches</strong> that include code-based schemes like BIKE — ensuring that a breakthrough against lattices doesn't compromise everything at once.</p>
+      </div>
+
+      <div class="card">
+        <h3>Explore More</h3>
+        <div class="cross-links" aria-label="Related demos">
+          <a href="https://systemslibrarian.github.io/crypto-lab-kyber-vault/" class="cross-link-badge" aria-label="crypto-lab-kyber-vault: ML-KEM demo">
+            <span class="badge-icon" aria-hidden="true">🔷</span>
+            <span class="badge-text">crypto-lab-kyber-vault<br /><small>ML-KEM (Kyber) — The standardized lattice-based KEM</small></span>
+          </a>
+          <a href="https://systemslibrarian.github.io/crypto-lab-mceliece-gate/" class="cross-link-badge" aria-label="crypto-lab-mceliece-gate: Classic McEliece demo">
+            <span class="badge-icon" aria-hidden="true">🏛️</span>
+            <span class="badge-text">crypto-lab-mceliece-gate<br /><small>Classic McEliece — Same code-based family, different tradeoffs</small></span>
+          </a>
+          <a href="https://systemslibrarian.github.io/crypto-lab-dilithium-seal/" class="cross-link-badge" aria-label="crypto-lab-dilithium-seal: ML-DSA signatures demo">
+            <span class="badge-icon" aria-hidden="true">🖊️</span>
+            <span class="badge-text">crypto-lab-dilithium-seal<br /><small>ML-DSA (Dilithium) — Lattice-based digital signatures</small></span>
+          </a>
+          <a href="https://systemslibrarian.github.io/crypto-lab-sphincs-ledger/" class="cross-link-badge" aria-label="crypto-lab-sphincs-ledger: SLH-DSA signatures demo">
+            <span class="badge-icon" aria-hidden="true">🌲</span>
+            <span class="badge-text">crypto-lab-sphincs-ledger<br /><small>SLH-DSA (SPHINCS+) — Hash-based digital signatures</small></span>
+          </a>
+          <a href="https://systemslibrarian.github.io/crypto-compare/" class="cross-link-badge" aria-label="crypto-compare: KEM comparison dashboard">
+            <span class="badge-icon" aria-hidden="true">📊</span>
+            <span class="badge-text">crypto-compare<br /><small>Side-by-side KEM category comparison</small></span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-content">
+      <a href="https://github.com/systemslibrarian/crypto-lab-bike-vault" class="github-badge" target="_blank" rel="noopener" aria-label="View source on GitHub">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>View on GitHub</span>
+      </a>
+      <p class="footer-verse">"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31</p>
+    </div>
+  </footer>
+
+</body>
+</html>

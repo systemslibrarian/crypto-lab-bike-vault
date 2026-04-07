@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BIKE Vault — Redirecting</title>
+  <script>
+    // Single-page app redirect for GitHub Pages
+    const path = window.location.pathname;
+    const repo = '/crypto-lab-bike-vault/';
+    if (path !== repo && path !== repo + 'index.html') {
+      window.location.replace(repo + '?' + encodeURIComponent(path));
+    }
+  </script>
+</head>
+<body>
+  <p>Redirecting&hellip;</p>
+</body>
+</html>
