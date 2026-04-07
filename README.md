@@ -44,8 +44,16 @@ Open [http://localhost:5173/crypto-lab-bike-vault/](http://localhost:5173/crypto
 
 ```bash
 npm run build    # Production build to dist/
-npm run deploy   # Build + deploy to GitHub Pages
 ```
+
+GitHub Pages deployment is handled by the repository workflow in `.github/workflows/deploy-pages.yml`.
+
+Required repository setting:
+
+1. Go to GitHub `Settings` -> `Pages`
+2. Set `Source` to `GitHub Actions`
+
+After that, every push to `main` rebuilds and republishes the site.
 
 ## Security Notes
 
