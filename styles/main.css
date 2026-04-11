@@ -75,38 +75,6 @@
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* --- OS color scheme detection --- */
-@media (prefers-color-scheme: light) {
-  html:not([data-theme="dark"]) {
-    --bg-primary: #f8f9fc;
-    --bg-secondary: #ffffff;
-    --bg-card: #ffffff;
-    --bg-code: #f0f1f5;
-    --bg-input: #f0f1f5;
-    --text-primary: #1a1d27;
-    --text-secondary: #4b5068;
-    --text-muted: #7a7f96;
-    --accent: #2563eb;
-    --accent-hover: #1d4ed8;
-    --accent-subtle: rgba(37, 99, 235, 0.08);
-    --success: #059669;
-    --success-bg: rgba(5, 150, 105, 0.08);
-    --error: #dc2626;
-    --error-bg: rgba(220, 38, 38, 0.08);
-    --warning: #d97706;
-    --warning-bg: rgba(217, 119, 6, 0.08);
-    --border: #d4d6e0;
-    --border-focus: #2563eb;
-    --chip-bg: #e8eaf0;
-    --chip-text: #2563eb;
-    --bar-bike: #7c3aed;
-    --bar-mlkem: #2563eb;
-    --bar-rsa: #6b7280;
-    --bar-mceliece: #db2777;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-}
-
 /* --- Reset & Base --- */
 *,
 *::before,
@@ -232,6 +200,7 @@ blockquote {
 
 /* --- Header --- */
 .site-header {
+  position: relative;
   padding: 1.25rem 1rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
@@ -277,23 +246,31 @@ blockquote {
 
 /* --- Theme Toggle --- */
 .theme-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.6rem;
+  height: 2.6rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.5rem;
-  min-width: var(--tap-min);
-  min-height: var(--tap-min);
+  border-radius: 50%;
+  padding: 0;
+  min-width: 2.6rem;
+  min-height: 2.6rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-primary);
+  color: var(--accent);
   font-size: 1.25rem;
-  transition: background var(--transition);
+  line-height: 1;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 .theme-toggle:hover {
   background: var(--accent-subtle);
+  color: var(--accent-hover);
+  border-color: var(--accent);
 }
 
 /* --- Primitive Chips --- */

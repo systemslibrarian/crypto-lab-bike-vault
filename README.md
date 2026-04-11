@@ -4,32 +4,25 @@
 
 **[▶ Live Demo](https://systemslibrarian.github.io/crypto-lab-bike-vault/)**
 
-An interactive browser-based demonstration of **BIKE (Bit Flipping Key Encapsulation)** — a code-based post-quantum KEM and NIST Round 4 alternate candidate. Explore how quasi-cyclic moderate-density parity-check (QC-MDPC) codes enable post-quantum key encapsulation and how BIKE compares to the standardized ML-KEM (Kyber).
+## 1. What It Is
 
-## Overview
+This project is an interactive demo of BIKE (Bit Flipping Key Encapsulation) built on QC-MDPC codes, with the derived shared secret used in AES-256-GCM. BIKE is a key encapsulation mechanism for establishing a shared secret over an untrusted channel without pre-shared keys. It addresses the key exchange problem under post-quantum assumptions by relying on code-based hardness rather than lattice assumptions. Security-wise, BIKE is an asymmetric post-quantum KEM, while AES-256-GCM is a symmetric authenticated-encryption primitive used after shared-secret agreement.
 
-BIKE is built on the hardness of decoding random quasi-cyclic codes — a problem studied since the 1960s and believed to be resistant to quantum computers. This demo walks through the complete BIKE KEM lifecycle: key generation, encapsulation with the Black-Gray-Flip decoder, decapsulation, and end-to-end encryption using the derived shared secret with AES-256-GCM.
+## 2. When to Use It
 
-**Important:** This demo uses a pedagogically accurate simulation with reduced parameters for browser performance. All algorithmic steps — sparse polynomial generation, polynomial inversion, QC-MDPC syndrome computation, and BGF decoding — are structurally identical to the real BIKE specification. The simulation is clearly labeled as illustrative, not production-ready.
+- Evaluate code-based post-quantum KEM behavior in a browser demo. This fits when you want to inspect BIKE flow and outputs without deploying native crypto toolchains.
+- Teach BIKE and QC-MDPC concepts to engineers or students. The panelized UI maps core steps to concrete artifacts like keys, ciphertext, and shared-secret checks.
+- Compare post-quantum assumptions across KEM families. It is useful when discussing BIKE vs ML-KEM tradeoffs and cryptographic diversity planning.
+- Prototype educational workflows that pair a KEM with symmetric encryption. The demo shows how BIKE output can feed AES-256-GCM in an end-to-end sequence.
+- Do not use this implementation for production cryptography. It is explicitly an illustrative browser simulation and not a hardened, validated BIKE deployment.
 
-## What You Can Explore
+## 3. Live Demo
 
-1. **Code-Based Cryptography Primer** — Error-correcting codes, parity check matrices, QC-MDPC structure, and the LPN hardness assumption
-2. **BIKE Key Generation** — Generate a BIKE-1 keypair, inspect the sparse private key and public key structure, compare key sizes across schemes
-3. **Encapsulation & Decapsulation** — Watch Alice encapsulate a shared secret, Bob recover it via the Black-Gray-Flip decoder, and verify the secrets match. Then encrypt a message end-to-end with AES-256-GCM
-4. **BIKE vs ML-KEM Comparison** — Side-by-side comparison of key sizes, ciphertext sizes, security assumptions, and NIST status across all security levels
-5. **Why Code-Based PQ Matters** — Cryptographic diversity, the McEliece legacy (1978), and why we shouldn't put all eggs in one mathematical basket
+Live demo: https://systemslibrarian.github.io/crypto-lab-bike-vault/
 
-## Primitives Used
+The demo lets you move through BIKE primer material, run key generation, perform encapsulation/decapsulation, and test message encryption with AES-256-GCM. You can use controls including Generate Keypair, Encapsulate (Alice), Decapsulate (Bob), panel navigation tabs, and the message input for encryption. Parameter values are shown in the interface (for example BIKE-1 values and simulation parameters) so users can inspect how settings affect displayed outputs.
 
-| Primitive | Role | Standard / Status |
-|-----------|------|-------------------|
-| **BIKE** | Key Encapsulation Mechanism | NIST Round 4 Alternate Candidate |
-| **QC-MDPC** | Error-correcting code structure | Underlying mathematical foundation |
-| **AES-256-GCM** | Symmetric encryption (DEM layer) | NIST Standard (via WebCrypto) |
-| **SHA-256** | Shared secret derivation | NIST Standard (via WebCrypto) |
-
-## Running Locally
+## 4. How to Run Locally
 
 ```bash
 git clone https://github.com/systemslibrarian/crypto-lab-bike-vault.git
@@ -38,66 +31,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173/crypto-lab-bike-vault/](http://localhost:5173/crypto-lab-bike-vault/) in your browser.
+No environment variables are required.
 
-### Build & Deploy
+## 5. Part of the Crypto-Lab Suite
 
-```bash
-npm run build    # Production build to dist/
-```
-
-GitHub Pages deployment is handled by the repository workflow in `.github/workflows/deploy-pages.yml`.
-
-Required repository setting:
-
-1. Go to GitHub `Settings` -> `Pages`
-2. Set `Source` to `GitHub Actions`
-
-After that, every push to `main` rebuilds and republishes the site.
-
-## Security Notes
-
-- **Illustrative simulation:** This demo uses reduced BIKE parameters (r=587) for browser performance. The algorithmic structure is accurate, but this is not a production BIKE implementation. All simulation output is clearly labeled.
-- **Non-zero DFR:** BIKE has a non-zero decapsulation failure rate (DFR < 2⁻¹²⁸ for BIKE-1). This means decapsulation can fail for some error patterns. BIKE is not suitable for protocols requiring perfect correctness — use ML-KEM for production deployments requiring zero DFR.
-- **NIST Round 4 status:** BIKE is an alternate candidate under active evaluation. It is not yet standardized. For production post-quantum KEM, use ML-KEM (FIPS 203).
-- **AES-256-GCM** operations use the native WebCrypto API — these are real, not simulated.
-
-### BIKE Parameter Sets (NIST Round 4 Submission Spec)
-
-| Parameter Set | Level | r | w | t |
-|---------------|-------|-------|-----|-----|
-| BIKE-1 | 1 | 12,323 | 142 | 134 |
-| BIKE-3 | 3 | 24,659 | 206 | 199 |
-| BIKE-5 | 5 | 40,973 | 274 | 264 |
-
-Source: [BIKE Specification](https://bikesuite.org), NIST Round 4 Submission
-
-## Accessibility
-
-This demo meets **WCAG 2.1 AA** standards:
-
-- Full keyboard navigation with logical tab order — no keyboard traps
-- ARIA labels on all interactive elements
-- Focus indicators visible in both dark and light modes (minimum 3:1 contrast ratio)
-- Color-coded indicators always paired with text equivalents
-- `prefers-reduced-motion` respected — animations suppressed when enabled
-- Minimum 4.5:1 contrast ratio for normal text in both modes
-- Screen reader navigable throughout
-
-## Why This Matters
-
-ML-KEM (Kyber) is the NIST-standardized post-quantum KEM — and it should be the default choice for most deployments. But **cryptographic diversity** matters.
-
-BIKE belongs to the **code-based** cryptographic family, which traces back to McEliece (1978) — the oldest post-quantum proposal still unbroken. If a breakthrough attack against lattice problems (the foundation of ML-KEM) emerges, code-based schemes survive.
-
-Post-quantum migration should not put all eggs in one mathematical basket.
-
-## Related Demos
-
-- **[crypto-lab-kyber-vault](https://systemslibrarian.github.io/crypto-lab-kyber-vault/)** — ML-KEM (Kyber): The NIST-standardized lattice-based KEM
-- **[crypto-lab-dilithium-seal](https://systemslibrarian.github.io/crypto-lab-dilithium-seal/)** — ML-DSA (Dilithium): Lattice-based digital signatures
-- **[crypto-lab-sphincs-ledger](https://systemslibrarian.github.io/crypto-lab-sphincs-ledger/)** — SLH-DSA (SPHINCS+): Hash-based digital signatures
-- **[crypto-compare](https://systemslibrarian.github.io/crypto-compare/)** — Side-by-side comparison dashboard
+This demo is part of the Crypto-Lab suite at https://systemslibrarian.github.io/crypto-lab/.
 
 ---
 

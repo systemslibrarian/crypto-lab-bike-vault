@@ -77,24 +77,21 @@ export function initPanels(): void {
 /** Initialize dark/light theme toggle */
 export function initTheme(): void {
   const toggle = document.getElementById('theme-toggle') as HTMLButtonElement;
-  const icon = toggle.querySelector('.theme-icon') as HTMLSpanElement;
   const html = document.documentElement;
 
-  // Load saved preference or detect OS preference
-  const saved = localStorage.getItem('theme');
-  if (saved === 'light' || (!saved && window.matchMedia('(prefers-color-scheme: light)').matches)) {
-    html.dataset.theme = 'light';
-    toggle.setAttribute('aria-label', 'Switch to dark mode');
-    icon.textContent = '☀️';
-  } else if (saved === 'dark') {
-    html.dataset.theme = 'dark';
+  function applyTheme(theme: 'dark' | 'light'): void {
+    html.dataset.theme = theme;
+    toggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+    toggle.textContent = theme === 'dark' ? '🌙' : '☀️';
   }
+
+  const initialTheme = html.dataset.theme === 'light' ? 'light' : 'dark';
+  applyTheme(initialTheme);
 
   toggle.addEventListener('click', () => {
     const isLight = html.dataset.theme === 'light';
-    html.dataset.theme = isLight ? 'dark' : 'light';
-    toggle.setAttribute('aria-label', isLight ? 'Switch to light mode' : 'Switch to dark mode');
-    icon.textContent = isLight ? '🌙' : '☀️';
-    localStorage.setItem('theme', html.dataset.theme);
+    const nextTheme: 'dark' | 'light' = isLight ? 'dark' : 'light';
+    applyTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
   });
 }
