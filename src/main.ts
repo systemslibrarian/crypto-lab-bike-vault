@@ -207,7 +207,7 @@ function initEncapDecap(): void {
     } catch (err) {
       decapOutput.innerHTML = `<p class="error-text" role="alert">Decapsulation failed: ${escapeHtml(String(err))}</p>`;
     } finally {
-      decapBtn.disabled = true;
+      decapBtn.disabled = false;
       decapBtn.textContent = 'Decapsulate (Bob)';
     }
   });
