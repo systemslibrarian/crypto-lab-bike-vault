@@ -275,13 +275,12 @@ export async function bikeEncap(publicKey: Uint8Array): Promise<EncapResult> {
   const { poly: e0, positions: e0Pos } = randomSparsePoly(SIM_R, w0);
   const { poly: e1, positions: e1Pos } = randomSparsePoly(SIM_R, w1);
 
-  // Ciphertext: c0 = e0 + e1 * h, c1 = e1
+  // Ciphertext: c0 = e0 + e1 * h (c1 is simulated 32-byte FO part)
   const e1h = polyMul(e1, h, SIM_R);
   const c0 = zeroPoly(SIM_R);
   for (let i = 0; i < SIM_R; i++) {
     c0[i] = (e0[i] ^ e1h[i]) as 0 | 1;
   }
-  const c1 = e1;
 
   // Shared secret K = SHA-256(e0 || e1)
   const eBuf = new Uint8Array(SIM_R * 2);
@@ -290,7 +289,10 @@ export async function bikeEncap(publicKey: Uint8Array): Promise<EncapResult> {
   const sharedSecret = await sha256(eBuf);
 
   const c0Packed = packPoly(c0);
-  const c1Packed = packPoly(c1);
+  
+  // In real BIKE, c1 is 32 bytes (m ⊕ Hash(e)). Simulation uses 32 random bytes.
+  const c1Packed = new Uint8Array(32);
+  crypto.getRandomValues(c1Packed);
 
   const errorPositions = [
     ...e0Pos.map(p => p),
@@ -423,15 +425,12 @@ export async function bikeDecap(
 ): Promise<DecapResult> {
   const t0 = performance.now();
 
-  const bytesPerPoly = Math.ceil(SIM_R / 8);
-
-  // Unpack c0, c1
+  // Unpack c0
   const c0 = zeroPoly(SIM_R);
-  const c1 = zeroPoly(SIM_R);
   for (let i = 0; i < SIM_R; i++) {
     c0[i] = ((ciphertext[i >> 3] >> (i & 7)) & 1) as 0 | 1;
-    c1[i] = ((ciphertext[bytesPerPoly + (i >> 3)] >> (i & 7)) & 1) as 0 | 1;
   }
+  // c1 is the remaining 32 bytes, not needed for pure BGF decoding
 
   // Unpack private key
   const h0 = zeroPoly(SIM_R);
@@ -441,13 +440,10 @@ export async function bikeDecap(
     h1[i] = ((privateH1[i >> 3] >> (i & 7)) & 1) as 0 | 1;
   }
 
-  // Compute syndrome: s = c0 * h0 + c1 * h1 (in the circulant ring)
-  const c0h0 = polyMul(c0, h0, SIM_R);
-  const c1h1 = polyMul(c1, h1, SIM_R);
-  const syndrome = zeroPoly(SIM_R);
-  for (let i = 0; i < SIM_R; i++) {
-    syndrome[i] = (c0h0[i] ^ c1h1[i]) as 0 | 1;
-  }
+  // Compute syndrome: s = c0 * h0. 
+  // Since c0 = e0 + e1 * h and h = h0^{-1} * h1 (in circulant ring),
+  // c0 * h0 = e0 * h0 + e1 * h1
+  const syndrome = polyMul(c0, h0, SIM_R);
 
   // Decode using BGF
   const result = bgfDecode(syndrome, h0, h1, SIM_R);

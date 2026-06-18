@@ -24,9 +24,12 @@
   --bg-input: #252838;
   --text-primary: #e8eaf0;
   --text-secondary: #a0a4b8;
-  --text-muted: #6b7094;
+  --text-muted: #8389ab;
   --accent: #60a5fa;
   --accent-hover: #93c5fd;
+  /* Text drawn ON accent/colored fills — dark ink for AA contrast on bright blue */
+  --on-accent: #0b1020;
+  --on-bar: #0f1117;
   --accent-subtle: rgba(96, 165, 250, 0.12);
   --success: #34d399;
   --success-bg: rgba(52, 211, 153, 0.12);
@@ -54,9 +57,12 @@
   --bg-input: #f0f1f5;
   --text-primary: #1a1d27;
   --text-secondary: #4b5068;
-  --text-muted: #7a7f96;
+  --text-muted: #5d6276;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
+  /* Text drawn ON accent/colored fills — white on the darker light-mode blue */
+  --on-accent: #ffffff;
+  --on-bar: #ffffff;
   --accent-subtle: rgba(37, 99, 235, 0.08);
   --success: #059669;
   --success-bg: rgba(5, 150, 105, 0.08);
@@ -95,7 +101,10 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  overflow-wrap: break-word;
 }
 
 /* --- Skip Link --- */
@@ -104,7 +113,7 @@ body {
   top: -100%;
   left: 1rem;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   padding: 0.5rem 1rem;
   border-radius: var(--radius-sm);
   z-index: 1000;
@@ -364,7 +373,7 @@ main {
 
 .panel-tab.active .tab-number {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 /* --- Panels --- */
@@ -435,7 +444,7 @@ main {
 
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -1010,7 +1019,7 @@ main {
 .chart-bar-value {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--on-bar);
   white-space: nowrap;
 }
 
@@ -1178,6 +1187,22 @@ main {
 }
 
 /* Small mobile (ensure no overflow) */
+@media (max-width: 480px) {
+  /* Tab strip scrolls horizontally instead of wrapping awkwardly */
+  .panel-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scroll-snap-type: x proximity;
+  }
+
+  .panel-tab {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+}
+
 @media (max-width: 400px) {
   .panel-tab {
     font-size: 0.75rem;

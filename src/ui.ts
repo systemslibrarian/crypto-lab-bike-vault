@@ -7,7 +7,15 @@ export function initPanels(): void {
   const tabs = document.querySelectorAll<HTMLButtonElement>('.panel-tab');
   const panels = document.querySelectorAll<HTMLElement>('.panel');
 
-  function switchToPanel(panelId: string): void {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /**
+   * Activate a panel.
+   * @param panelId  the panel to show
+   * @param moveFocus  when true, move focus to the panel heading (used by in-content
+   *   navigation buttons). Tab clicks keep focus on the tab, per the ARIA tab pattern.
+   */
+  function switchToPanel(panelId: string, moveFocus = false): void {
     tabs.forEach(t => {
       const isActive = t.dataset.panel === panelId;
       t.classList.toggle('active', isActive);
@@ -19,14 +27,21 @@ export function initPanels(): void {
       p.classList.toggle('active', isActive);
       p.hidden = !isActive;
     });
-    // Scroll to top of panel
+    // Scroll to top of panel (honor reduced-motion preference)
     const activePanel = document.getElementById(panelId);
     if (activePanel) {
-      activePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      activePanel.scrollIntoView({
+        behavior: prefersReducedMotion.matches ? 'auto' : 'smooth',
+        block: 'start',
+      });
+      if (moveFocus) {
+        const heading = activePanel.querySelector<HTMLElement>('h2');
+        heading?.focus();
+      }
     }
   }
 
-  // Tab click
+  // Tab click — focus stays on the tab (ARIA tab pattern)
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const panelId = tab.dataset.panel;
@@ -60,11 +75,12 @@ export function initPanels(): void {
     });
   });
 
-  // "Next panel" buttons and link buttons
+  // "Next panel" buttons and link buttons — move focus into the new panel so
+  // keyboard and screen-reader users land on the freshly revealed content.
   document.querySelectorAll<HTMLButtonElement>('.next-panel-btn, .link-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const next = btn.dataset.next;
-      if (next) switchToPanel(next);
+      if (next) switchToPanel(next, true);
     });
   });
 

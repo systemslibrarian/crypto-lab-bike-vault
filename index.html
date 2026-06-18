@@ -68,7 +68,7 @@
 
     <!-- Panel 1: Code-Based Cryptography Primer -->
     <section id="panel-1" class="panel active" role="tabpanel" aria-labelledby="tab-1">
-      <h2>Code-Based Cryptography Primer</h2>
+      <h2 tabindex="-1">Code-Based Cryptography Primer</h2>
 
       <div class="card">
         <h3>Error-Correcting Codes: The Foundation</h3>
@@ -82,7 +82,7 @@
         <div class="demo-box" aria-label="Interactive parity check example">
           <div class="parity-demo">
             <label for="parity-input">Enter 4-bit message:</label>
-            <input type="text" id="parity-input" maxlength="4" placeholder="1011" pattern="[01]{4}" class="mono-input" aria-describedby="parity-help" />
+            <input type="text" id="parity-input" maxlength="4" placeholder="1011" pattern="[01]{4}" inputmode="numeric" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" class="mono-input" aria-describedby="parity-help" />
             <span id="parity-help" class="help-text">Enter exactly 4 binary digits (0 or 1)</span>
             <button id="parity-encode-btn" class="btn btn-primary" aria-label="Encode message with parity check">Encode</button>
           </div>
@@ -101,17 +101,17 @@
         <div class="visual-box" aria-label="Visual representation of QC-MDPC parity check matrix structure">
           <div class="matrix-visual">
             <div class="matrix-label">H =</div>
-            <div class="matrix-bracket">[</div>
+            <div class="matrix-bracket" aria-hidden="true">[</div>
             <div class="matrix-block" aria-label="H₀: r×r circulant block">
               <span class="block-label">H₀</span>
               <span class="block-desc">r × r circulant</span>
             </div>
-            <div class="matrix-divider">|</div>
+            <div class="matrix-divider" aria-hidden="true">|</div>
             <div class="matrix-block" aria-label="H₁: r×r circulant block">
               <span class="block-label">H₁</span>
               <span class="block-desc">r × r circulant</span>
             </div>
-            <div class="matrix-bracket">]</div>
+            <div class="matrix-bracket" aria-hidden="true">]</div>
           </div>
           <p class="visual-caption"><strong>BIKE-1 (Level 1):</strong> r = 12,323 — each circulant block defined by a row of weight w/2 = 71</p>
         </div>
@@ -132,7 +132,7 @@
 
     <!-- Panel 2: BIKE Key Generation -->
     <section id="panel-2" class="panel" role="tabpanel" aria-labelledby="tab-2" hidden>
-      <h2>BIKE Key Generation</h2>
+      <h2 tabindex="-1">BIKE Key Generation</h2>
 
       <div class="card">
         <div class="status-chip-row">
@@ -247,7 +247,7 @@
 
     <!-- Panel 3: Encapsulation and Decapsulation -->
     <section id="panel-3" class="panel" role="tabpanel" aria-labelledby="tab-3" hidden>
-      <h2>Encapsulation &amp; Decapsulation</h2>
+      <h2 tabindex="-1">Encapsulation &amp; Decapsulation</h2>
 
       <div class="card">
         <div class="status-chip-row">
@@ -299,7 +299,7 @@
           <p>The shared secret K is now used as a symmetric key for <strong>AES-256-GCM</strong> encryption via the Web Crypto API.</p>
           <div class="aes-demo">
             <label for="aes-plaintext">Message to encrypt:</label>
-            <input type="text" id="aes-plaintext" class="text-input" placeholder="Hello, post-quantum world!" aria-describedby="aes-help" />
+            <input type="text" id="aes-plaintext" class="text-input" placeholder="Hello, post-quantum world!" autocomplete="off" aria-describedby="aes-help" />
             <span id="aes-help" class="help-text">Enter a message to encrypt with the shared secret</span>
             <button id="aes-encrypt-btn" class="btn btn-primary" aria-label="Encrypt message with AES-256-GCM using BIKE shared secret">Encrypt</button>
             <div id="aes-output" class="output-area" aria-live="polite" role="status"></div>
@@ -315,7 +315,7 @@
 
     <!-- Panel 4: BIKE vs ML-KEM Comparison -->
     <section id="panel-4" class="panel" role="tabpanel" aria-labelledby="tab-4" hidden>
-      <h2>BIKE vs ML-KEM Comparison</h2>
+      <h2 tabindex="-1">BIKE vs ML-KEM Comparison</h2>
 
       <div class="card">
         <h3>Side-by-Side: Key Sizes, Ciphertext, Performance</h3>
@@ -415,7 +415,7 @@
 
     <!-- Panel 5: Why Code-Based PQ Matters -->
     <section id="panel-5" class="panel" role="tabpanel" aria-labelledby="tab-5" hidden>
-      <h2>Why Code-Based Post-Quantum Crypto Matters</h2>
+      <h2 tabindex="-1">Why Code-Based Post-Quantum Crypto Matters</h2>
 
       <div class="card">
         <h3>Cryptographic Diversity</h3>
@@ -484,8 +484,10 @@
     </section>
   </main>
 
-  <footer style="text-align:center; padding: 1.5rem; font-size: 0.85rem; opacity: 0.7; margin-top: 2rem;">
-    Whether you eat or drink or whatever you do, do it all for the glory of God. — 1 Corinthians 10:31
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-content">
+      <p class="footer-verse">Whether you eat or drink or whatever you do, do it all for the glory of God. — 1 Corinthians 10:31</p>
+    </div>
   </footer>
 
   <script type="module" src="/src/main.ts"></script>
