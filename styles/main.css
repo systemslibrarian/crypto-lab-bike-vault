@@ -1252,3 +1252,15 @@ main {
   max-width: 100%;
   overflow-x: auto;
 }
+
+
+/* ═══ Accessibility: WCAG AA contrast overrides (auto-added) ═══ */
+[data-theme="light"] .chip { background-color: #f0f2f5; } /* was #e8eaf0 on #2563eb = 4.30:1 → 4.61:1 */
+
+
+/* ═══ Accessibility: faint-text contrast overrides (auto-added) ═══ */
+[data-theme="light"] .status-round4 { color: #a95d05; } /* was #d97706, now ≥4.6:1 on theme surfaces */
+[data-theme="light"] .status-standard,
+[data-theme="light"] .success-text,
+[data-theme="light"] .shared-secret,
+[data-theme="light"] .decrypted-text { color: #04815a; } /* was #059669, now ≥4.6:1 on theme surfaces */
