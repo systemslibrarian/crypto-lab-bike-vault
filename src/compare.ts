@@ -36,7 +36,8 @@ export function renderCompareChart(container: HTMLElement): void {
 
   for (const level of levels) {
     const entries = COMPARISON_DATA.filter(e => e.level === level);
-    html += `<div class="chart-level-label" role="rowgroup" aria-label="Security Level ${level}">Level ${level}</div>`;
+    html += `<div class="chart-rowgroup" role="rowgroup" aria-label="Security Level ${level}">`;
+    html += `<div class="chart-level-label" role="presentation" aria-hidden="true">Level ${level}</div>`;
 
     for (const entry of entries) {
       const total = entry.pkBytes + entry.ctBytes;
@@ -46,13 +47,14 @@ export function renderCompareChart(container: HTMLElement): void {
       html += `
         <div class="chart-row" role="row">
           <span class="chart-label" role="rowheader">${entry.name}</span>
-          <div class="chart-bar-container">
-            <div class="chart-bar ${barClass}" style="width:${pct.toFixed(1)}%;" role="cell" aria-label="${entry.name}: ${total.toLocaleString()} bytes total">
+          <div class="chart-bar-container" role="cell">
+            <div class="chart-bar ${barClass}" style="width:${pct.toFixed(1)}%;" aria-label="${entry.name}: ${total.toLocaleString()} bytes total">
               <span class="chart-bar-value">${total.toLocaleString()} B</span>
             </div>
           </div>
         </div>`;
     }
+    html += '</div>';
   }
 
   html += '</div>';

@@ -816,6 +816,12 @@ main {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-primary);
+  /* Bars can fill their full width in a variety of colors (incl. the pink
+     mceliece fill), so the value can land on any of them. Sit it on the
+     panel surface color so contrast is stable regardless of the bar behind. */
+  background-color: var(--bg-secondary);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
 }
 
 /* --- Matrix Visual --- */
@@ -865,7 +871,9 @@ main {
 
 .block-desc {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  /* --text-muted drops below 4.5:1 on the subtle-accent block fill; use the
+     higher-contrast secondary token so small print stays AA-legible. */
+  color: var(--text-secondary);
 }
 
 .matrix-divider {
@@ -1264,3 +1272,8 @@ main {
 [data-theme="light"] .success-text,
 [data-theme="light"] .shared-secret,
 [data-theme="light"] .decrypted-text { color: #04815a; } /* was #059669, now ≥4.6:1 on theme surfaces */
+
+/* Status chips render 12px bold text on translucent tinted fills, which pushes
+   these tokens just under 4.5:1. Darken them in-context so the chips clear AA. */
+[data-theme="light"] .status-standard.status-chip { color: #036849; } /* 4.45:1 → ≥4.5:1 on --success-bg over card */
+[data-theme="light"] .status-sim.status-chip { color: #b91c1c; } /* was #dc2626 (4.27:1) → ≥4.5:1 on --error-bg over card */
