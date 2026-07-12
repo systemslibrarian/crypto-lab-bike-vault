@@ -640,6 +640,16 @@ main {
   font-style: italic;
 }
 
+/* Inline honesty disclosure (e.g. the simulated c1 caveat). Reuses the
+   .meta color token so it keeps the same AA-passing contrast; the accent
+   border just draws the eye without introducing a new text color. */
+.note-inline {
+  border-left: 3px solid var(--warning);
+  padding-left: 0.6rem;
+  margin-top: 0.4rem;
+  line-height: 1.5;
+}
+
 .shared-secret {
   color: var(--success);
   font-weight: 600;

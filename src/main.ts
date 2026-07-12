@@ -135,8 +135,13 @@ function initEncapDecap(): void {
           <h4>Ciphertext c₀</h4>
           <p class="mono output-scroll" aria-label="Ciphertext c0 hex">${truncHex(result.c0Hex, 80)}</p>
 
-          <h4>Ciphertext c₁</h4>
+          <h4>Ciphertext c₁ <span class="status-chip status-sim">simulated</span></h4>
           <p class="mono output-scroll" aria-label="Ciphertext c1 hex">${truncHex(result.c1Hex, 80)}</p>
+          <p class="meta note-inline">In real BIKE, c₁ = m ⊕ L(e) binds the message to the error under the
+          Fujisaki–Okamoto (IND-CCA) transform, and decapsulation re-encrypts to
+          verify it. This demo emits 32 random bytes for c₁ and does <strong>not</strong>
+          perform that re-encryption check — decoding recovers the error directly,
+          so tampering with c₁ is not detected here.</p>
 
           <h4>Alice's Shared Secret K</h4>
           <p class="mono output-scroll shared-secret" aria-label="Alice's shared secret hex">${toHex(result.sharedSecret)}</p>
