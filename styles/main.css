@@ -215,6 +215,22 @@ blockquote {
   border-bottom: 1px solid var(--border);
 }
 
+/* BEGIN cl-hero standard — managed, keep in sync across fleet */
+/* Map fleet tokens to this demo's theme vars so contrast passes in both themes. */
+.cl-hero{--text-dim:var(--text-secondary);}
+.cl-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:clamp(1rem,4vw,3rem);flex-wrap:wrap;margin:clamp(1rem,3vw,2rem) 0 1.5rem;}
+/* Center the hero within the full-bleed header bar, matching the main column. */
+.site-header.cl-hero{max-width:var(--content-max);margin-left:auto;margin-right:auto;}
+.cl-hero-main{flex:1 1 22rem;min-width:min(100%,20rem);}
+.cl-hero-title{margin:0;font-size:clamp(1.6rem,3.8vw,2.7rem);font-weight:700;line-height:1.1;letter-spacing:.01em;}
+.cl-hero-sub{margin:.4rem 0 0;font-size:clamp(.9rem,1.6vw,1.05rem);letter-spacing:.01em;opacity:.85;}
+.cl-hero-desc{margin:.55rem 0 0;font-size:1rem;line-height:1.5;color:var(--text-dim);max-width:60ch;}
+.cl-hero-why{flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:color-mix(in oklab,var(--accent) 6%,transparent);}
+.cl-hero-why-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.14em;}
+.cl-hero-why-text{margin:.35rem 0 0;font-size:.95rem;line-height:1.5;}
+@media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}}
+/* END cl-hero standard */
+
 .header-top {
   display: flex;
   justify-content: space-between;

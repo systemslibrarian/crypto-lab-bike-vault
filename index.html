@@ -122,34 +122,33 @@
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <!-- Header -->
-  <header class="site-header" role="banner">
-    <div class="header-top">
-      <div class="header-left">
-        <span class="category-chip" aria-label="Category: Post-Quantum KEM">Post-Quantum KEM</span>
-        <h1 class="site-title">BIKE Vault</h1>
-        <p class="site-subtitle">Bit Flipping Key Encapsulation — Code-Based Post-Quantum Cryptography</p>
+  <header class="site-header cl-hero" role="banner">
+    <div class="cl-hero-main">
+      <span class="category-chip" aria-label="Category: Post-Quantum KEM">Post-Quantum KEM</span>
+      <h1 class="cl-hero-title">BIKE</h1>
+      <p class="cl-hero-sub">Code-Based PQ KEM · QC-MDPC · NIST Round 4</p>
+      <p class="cl-hero-desc">Generate a QC-MDPC keypair, encapsulate a shared secret, and watch the Black-Gray-Flip decoder recover the error vector to turn error-correcting codes into a hard decoding problem.</p>
+      <div class="primitive-chips" aria-label="Cryptographic primitives used">
+        <span class="chip">BIKE</span>
+        <span class="chip">QC-MDPC</span>
+        <span class="chip">AES-256-GCM</span>
+        <span class="chip">Code-Based</span>
       </div>
-      <button
-        id="theme-toggle"
-        class="theme-toggle"
-        type="button"
-        aria-label="Switch to light mode"
-      >🌙</button>
     </div>
-    <div class="primitive-chips" aria-label="Cryptographic primitives used">
-      <span class="chip">BIKE</span>
-      <span class="chip">QC-MDPC</span>
-      <span class="chip">AES-256-GCM</span>
-      <span class="chip">Code-Based</span>
-    </div>
+    <aside class="cl-hero-why" aria-label="Why it matters">
+      <span class="cl-hero-why-label">WHY IT MATTERS</span>
+      <p class="cl-hero-why-text">ML-KEM is the standard, but no single math problem should be a single point of failure. BIKE rests on code decoding — a family with 45+ years of cryptanalysis — so if lattices fall, this survives.</p>
+    </aside>
+    <button
+      id="theme-toggle"
+      class="theme-toggle"
+      type="button"
+      aria-label="Switch to light mode"
+    >🌙</button>
   </header>
 
   <!-- Main content -->
   <main id="main-content" role="main">
-    <!-- Why this matters -->
-    <section class="why-banner" aria-label="Why this matters">
-      <p><strong>Why this matters:</strong> ML-KEM (Kyber) is the NIST-standardized post-quantum KEM, but <em>cryptographic diversity</em> matters. BIKE offers an alternative based on error-correcting codes — a mathematical family with 45+ years of cryptanalysis. If lattice assumptions break, code-based crypto survives.</p>
-    </section>
 
     <!-- Panel navigation -->
     <nav class="panel-nav" role="tablist" aria-label="Demo panels">
