@@ -199,6 +199,45 @@ describe('BGF decoder recovers the planted error (KAT-style)', () => {
   });
 });
 
+describe('BGF decoder trace (backs the step-by-step visualization)', () => {
+  it('emits one snapshot per iteration with self-consistent flip counts and syndrome weights', async () => {
+    // The visualization renders this trace verbatim, so it must reflect the real
+    // decoder: each frame's flip count must equal the number of at-or-above-T
+    // counters, and the "after" weight must match the next frame's "before".
+    const kp = await bikeKeyGen();
+    const enc = await bikeEncap(kp.publicKey);
+    const dec = await bikeDecap(enc.ciphertext, kp.privateH0, kp.privateH1);
+
+    expect(dec.trace.length).toBeGreaterThan(0);
+    expect(dec.initialSyndromeWeight).toBe(dec.initialSyndrome.length);
+
+    for (let i = 0; i < dec.trace.length; i++) {
+      const step = dec.trace[i];
+      const blackFlips =
+        step.counters0.filter((c) => c >= step.threshold).length +
+        step.counters1.filter((c) => c >= step.threshold).length;
+      // Every Black bit (counter >= T) is exactly the set that gets flipped.
+      expect(step.flips0.length + step.flips1.length).toBe(blackFlips);
+      // Counters never exceed the column weight d = w/2 (a bit touches d checks).
+      for (const c of [...step.counters0, ...step.counters1]) {
+        expect(c).toBeGreaterThanOrEqual(0);
+        expect(c).toBeLessThanOrEqual(SIM_HALF_W);
+      }
+      // Chaining: this frame's post-flip weight is the next frame's pre-flip weight.
+      if (i + 1 < dec.trace.length) {
+        expect(dec.trace[i + 1].syndromeWeight).toBe(step.syndromeWeightAfter);
+      }
+    }
+
+    // The first frame starts from the reported initial syndrome weight.
+    expect(dec.trace[0].syndromeWeight).toBe(dec.initialSyndromeWeight);
+    // A successful decode ends at zero syndrome weight.
+    if (dec.success) {
+      expect(dec.trace[dec.trace.length - 1].syndromeWeightAfter).toBe(0);
+    }
+  }, 30_000);
+});
+
 describe('full KEM round-trip keygen -> encap -> decap', () => {
   it('produces matching shared secrets on a successful decapsulation', async () => {
     // With correct decoding, Alice and Bob must derive the same K.

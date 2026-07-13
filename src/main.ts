@@ -4,12 +4,16 @@
 import { bikeKeyGen, bikeEncap, bikeDecap, aesEncryptDecrypt, toHex, SIM_R, SIM_W, SIM_T, type BikeKeyPair, type EncapResult } from './bike';
 import { parityDemo, renderParityOutput } from './qcmdpc';
 import { renderCompareChart } from './compare';
+import { renderCirculantDemo } from './circulant';
+import { renderKeyViz } from './keyviz';
+import { renderDecoderViz } from './decoderviz';
 import { initPanels, initTheme } from './ui';
 
 // --- State ---
 let currentKeyPair: BikeKeyPair | null = null;
 let currentEncap: EncapResult | null = null;
 let sharedSecretForAes: Uint8Array | null = null;
+let stopDecoderViz: (() => void) | null = null;
 
 // --- Helpers ---
 function $(id: string): HTMLElement {
@@ -86,6 +90,18 @@ function initKeyGen(): void {
         </div>
       `;
 
+      // Render the sparse-vs-dense trapdoor visualization from the real key positions.
+      const kvPrereq = $('keyviz-prereq');
+      const kvContainer = $('keyviz');
+      kvPrereq.hidden = true;
+      kvContainer.hidden = false;
+      renderKeyViz(kvContainer, {
+        h0Positions: kp.h0Positions,
+        h1Positions: kp.h1Positions,
+        hPositions: kp.hPositions,
+        r: SIM_R,
+      });
+
       // Enable encap panel
       updateEncapPrereq();
 
@@ -125,6 +141,10 @@ function initEncapDecap(): void {
     encapOutput.innerHTML = '<p class="loading-text">Generating error vector and computing ciphertext…</p>';
     decapOutput.innerHTML = '';
     matchDiv.style.display = 'none';
+    // A fresh encapsulation invalidates any prior decoder run.
+    if (stopDecoderViz) { stopDecoderViz(); stopDecoderViz = null; }
+    $('decoder-viz-wrap').hidden = true;
+    $('decoder-viz').innerHTML = '';
 
     try {
       const result = await bikeEncap(currentKeyPair.publicKey);
@@ -173,6 +193,18 @@ function initEncapDecap(): void {
         currentKeyPair.privateH0,
         currentKeyPair.privateH1,
       );
+
+      // Render the step-by-step Black-Gray-Flip decoder from the real trace.
+      if (stopDecoderViz) { stopDecoderViz(); stopDecoderViz = null; }
+      const dvWrap = $('decoder-viz-wrap');
+      const dvContainer = $('decoder-viz');
+      dvWrap.hidden = false;
+      stopDecoderViz = renderDecoderViz(dvContainer, {
+        r: SIM_R,
+        initialSyndromeWeight: result.initialSyndromeWeight,
+        trace: result.trace,
+        success: result.success,
+      });
 
       const aliceHex = toHex(currentEncap.sharedSecret);
       const bobHex = toHex(result.sharedSecret);
@@ -276,6 +308,12 @@ function initAes(): void {
   });
 }
 
+// --- Panel 1: Circulant demo ---
+function initCirculant(): void {
+  const container = document.getElementById('circulant-demo');
+  if (container) renderCirculantDemo(container);
+}
+
 // --- Panel 4: Comparison Chart ---
 function initCompare(): void {
   const container = $('compare-chart');
@@ -289,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initPanels();
   initParityDemo();
+  initCirculant();
   initKeyGen();
   initEncapDecap();
   initAes();

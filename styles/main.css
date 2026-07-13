@@ -46,6 +46,15 @@
   --bar-rsa: #6b7094;
   --bar-mceliece: #f472b6;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  /* BGF decoder cell/badge tokens. *-fg carry text (badges/legend) and must
+     clear 4.5:1 on their *-bg; *-cell tint is for the (text-free) grid cells. */
+  --dv-warm: #3a4a6a;         /* some checks unsatisfied — cool blue-gray */
+  --dv-gray-cell: #6b7280;    /* Gray bit cell */
+  --dv-gray-bg: rgba(148, 163, 184, 0.16);
+  --dv-gray-fg: #cbd5e1;      /* light gray text on dark */
+  --dv-black-cell: #e2e8f0;   /* Black bit cell — near-white, stands out on dark grid */
+  --dv-black-bg: rgba(226, 232, 240, 0.14);
+  --dv-black-fg: #e2e8f0;
 }
 
 /* --- Light Theme --- */
@@ -79,6 +88,14 @@
   --bar-rsa: #6b7280;
   --bar-mceliece: #db2777;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* BGF decoder cell/badge tokens (light theme). */
+  --dv-warm: #c7d2e8;         /* some checks unsatisfied — pale blue */
+  --dv-gray-cell: #94a3b8;    /* Gray bit cell */
+  --dv-gray-bg: rgba(71, 85, 105, 0.12);
+  --dv-gray-fg: #475569;      /* slate text, ≥4.5:1 on light surfaces */
+  --dv-black-cell: #334155;   /* Black bit cell — dark, stands out on light grid */
+  --dv-black-bg: rgba(51, 65, 85, 0.12);
+  --dv-black-fg: #1e293b;     /* near-black text */
 }
 
 /* --- Reset & Base --- */
@@ -1288,6 +1305,501 @@ main {
 }
 
 
+/* ============================================================
+   Teaching visualizations — circulant, key trapdoor, BGF decoder
+   ============================================================ */
+
+.subhead {
+  margin-top: 1.25rem;
+  margin-bottom: 0.35rem;
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+/* --- Inline term abbreviations + terms strip --- */
+abbr.term {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
+  font-variant: none;
+}
+
+.terms-strip {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.terms-summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  min-height: var(--tap-min);
+  display: flex;
+  align-items: center;
+}
+
+.terms-summary:hover { color: var(--text-primary); }
+
+.terms-list {
+  margin: 0.6rem 0 0.2rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.term-item dt {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.term-item dd {
+  margin: 0.1rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* --- "Go deeper" disclosure card --- */
+.deeper-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.deeper-summary {
+  cursor: pointer;
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--tap-min);
+}
+
+.deeper-summary:hover { color: var(--accent); }
+
+.deeper-chip {
+  display: inline-block;
+  background: var(--accent-subtle);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+}
+
+.deeper-body {
+  padding: 0 1.25rem 1.25rem;
+}
+
+/* --- Circulant demo --- */
+.circulant-container { margin: 0.5rem 0 0.25rem; }
+
+.circ-instr,
+.circ-caption {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.circ-caption { margin-top: 0.75rem; }
+
+.circ-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0;
+}
+
+.circ-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.5rem 0;
+}
+
+.circ-bit {
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.circ-bit.circ-on {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+.circ-bit.circ-off {
+  background: var(--bg-input);
+  color: var(--text-muted);
+}
+
+.circ-bit:hover { border-color: var(--accent); }
+
+.circ-matrix {
+  display: inline-grid;
+  gap: 2px;
+  padding: 0.5rem;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-top: 0.25rem;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.circ-row {
+  display: flex;
+  gap: 2px;
+}
+
+.circ-row-first .circ-cell {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.circ-cell {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 2px;
+}
+
+.circ-cell.circ-on { background: var(--accent); }
+.circ-cell.circ-off { background: var(--bg-input); border: 1px solid var(--border); }
+
+/* --- Key trapdoor viz (sparse vs dense) --- */
+.keyviz-container { margin-top: 0.5rem; }
+
+.kv-wrap {
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+
+.kv-side {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+}
+
+.kv-side-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
+.kv-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kv-tag-sparse {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.kv-tag-dense {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+.kv-panes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.kv-pane { flex: 1 1 12rem; min-width: 11rem; }
+
+.kv-pane-label {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.kv-grid {
+  display: grid;
+  grid-template-columns: repeat(34, 1fr);
+  gap: 1px;
+  padding: 0.4rem;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.kv-cell {
+  aspect-ratio: 1;
+  border-radius: 1px;
+}
+
+.kv-off { background: var(--bg-input); }
+.kv-on { background: var(--accent); }
+.kv-tone-a { background: var(--success); }
+.kv-tone-b { background: var(--bar-bike); }
+.kv-tone-pub { background: var(--warning); }
+
+.kv-pane-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.35rem;
+}
+
+.kv-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.9rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.kv-arrow-glyph { font-size: 1.5rem; }
+
+.kv-caption {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-top: 0.5rem;
+}
+
+/* --- BGF decoder visualization --- */
+.decoder-viz-wrap { margin-top: 1rem; }
+
+.dv-intro {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.decoder-viz {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem;
+  background: var(--bg-secondary);
+}
+
+.dv-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.dv-btn {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.dv-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.dv-legend-item { display: flex; align-items: center; gap: 0.35rem; }
+
+.dv-swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+}
+
+.dv-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.dv-stat-num {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.dv-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.dv-badge-black {
+  background: var(--dv-black-bg);
+  color: var(--dv-black-fg);
+  border-color: var(--dv-black-fg);
+}
+
+.dv-badge-gray {
+  background: var(--dv-gray-bg);
+  color: var(--dv-gray-fg);
+  border-color: var(--dv-gray-fg);
+}
+
+.dv-badge-flip {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.dv-syndrome {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.dv-syndrome-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.dv-syndrome-track {
+  height: 0.9rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dv-syndrome-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.dv-syndrome-val {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.dv-blocks {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.dv-block-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.dv-grid {
+  display: grid;
+  grid-template-columns: repeat(34, 1fr);
+  gap: 1px;
+  padding: 0.35rem;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.dv-cell {
+  aspect-ratio: 1;
+  border-radius: 1px;
+  background: var(--bg-input);
+}
+
+/* Cell state colors — distinguished by hue AND lightness so they remain
+   legible; text is never carried on cells, so contrast gating applies to the
+   badges/legend which use the --dv-*-fg tokens below. */
+.dv-cell.bit-cold { background: var(--bg-input); }
+.dv-cell.bit-warm { background: var(--dv-warm); }
+.dv-cell.bit-gray { background: var(--dv-gray-cell); outline: 1px solid var(--dv-gray-fg); outline-offset: -1px; }
+.dv-cell.bit-black { background: var(--dv-black-cell); }
+.dv-cell.bit-flip { background: var(--accent); outline: 1px solid var(--accent-hover); outline-offset: -1px; }
+
+.dv-swatch.bit-cold { background: var(--bg-input); }
+.dv-swatch.bit-warm { background: var(--dv-warm); }
+.dv-swatch.bit-gray { background: var(--dv-gray-cell); }
+.dv-swatch.bit-black { background: var(--dv-black-cell); }
+.dv-swatch.bit-flip { background: var(--accent); }
+
+.dv-caption {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.dv-key {
+  font-weight: 700;
+  padding: 0 0.25rem;
+  border-radius: 3px;
+}
+
+.dv-key-black { background: var(--dv-black-bg); color: var(--dv-black-fg); }
+.dv-key-gray { background: var(--dv-gray-bg); color: var(--dv-gray-fg); }
+
+.dv-outcome {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+}
+
+.dv-outcome:empty { display: none; }
+
+.dv-outcome-ok {
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid var(--success);
+}
+
+.dv-outcome-fail {
+  color: var(--error);
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+}
+
+@media (min-width: 600px) {
+  .kv-wrap { grid-template-columns: 1fr auto 1fr; }
+  .kv-arrow { flex-direction: column; }
+  .dv-blocks { grid-template-columns: 1fr 1fr; }
+}
+
 /* ═══ Accessibility: WCAG AA contrast overrides (auto-added) ═══ */
 [data-theme="light"] .chip { background-color: #f0f2f5; } /* was #e8eaf0 on #2563eb = 4.30:1 → 4.61:1 */
 
@@ -1303,3 +1815,12 @@ main {
    these tokens just under 4.5:1. Darken them in-context so the chips clear AA. */
 [data-theme="light"] .status-standard.status-chip { color: #036849; } /* 4.45:1 → ≥4.5:1 on --success-bg over card */
 [data-theme="light"] .status-sim.status-chip { color: #b91c1c; } /* was #dc2626 (4.27:1) → ≥4.5:1 on --error-bg over card */
+
+/* Shared-secret hex sits on --bg-code (#f0f1f5), lighter than the card, so the
+   #04815a green dips just under 4.5:1. Darken it only in that context. */
+[data-theme="light"] .shared-secret.output-scroll { color: #036849; }
+
+/* Trapdoor-viz tags reuse the success/warning tokens on tinted fills — same
+   sub-4.5:1 issue as the status chips. Darken to the chip-safe shades. */
+[data-theme="light"] .kv-tag-sparse { color: #036849; }
+[data-theme="light"] .kv-tag-dense { color: #a95d05; }

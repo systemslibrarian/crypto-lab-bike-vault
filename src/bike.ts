@@ -72,6 +72,9 @@ export interface DecapResult {
   decoderIterations: number;
   success: boolean;
   timingMs: number;
+  initialSyndrome: number[];  // non-zero positions of the syndrome s = c0·h0 (block 0 view)
+  initialSyndromeWeight: number;
+  trace: BgfStep[];           // per-iteration BGF decoder snapshots (for visualization)
 }
 
 // --- Polynomial arithmetic over F₂[x]/(x^r − 1) ---
@@ -366,12 +369,35 @@ export function computeThreshold(syndromeWeight: number, d: number): number {
  * via the affine rule above — this is the behaviour that makes decoding
  * failures match the real DFR curve instead of decoding "by luck".
  */
+/**
+ * One recorded snapshot of the decoder BEFORE the flips of a given iteration are
+ * applied, capturing exactly the state a learner needs to watch a bit-flipping
+ * round unfold: the live syndrome weight, the flip threshold T, and — per bit —
+ * how many unsatisfied parity checks touch it (the "counter"). Bits whose counter
+ * is at or above T are Black (flipped this round); bits one short of T are Gray
+ * (on the bubble). The `flips` list is which bits actually flipped this round.
+ *
+ * This is emitted by the real decoder loop, not reconstructed after the fact —
+ * the visualization shows the same arithmetic the KEM round-trip test verifies.
+ */
+export interface BgfStep {
+  iteration: number;        // 0-based iteration index
+  threshold: number;        // flip threshold T for this iteration
+  syndromeWeight: number;   // weight of the syndrome at the start of this iteration
+  counters0: number[];      // unsatisfied-check counter per bit of block 0
+  counters1: number[];      // unsatisfied-check counter per bit of block 1
+  flips0: number[];         // positions in block 0 flipped this iteration
+  flips1: number[];         // positions in block 1 flipped this iteration
+  syndromeWeightAfter: number; // syndrome weight after this iteration's flips
+}
+
 export function bgfDecode(
   syndrome: Uint8Array,
   h0: Uint8Array,
   h1: Uint8Array,
   r: number,
   maxIter: number = 10,
+  trace?: BgfStep[],
 ): { e0: Uint8Array; e1: Uint8Array; iterations: number; success: boolean } {
   // Working copies
   const s = new Uint8Array(syndrome);
@@ -415,17 +441,35 @@ export function bgfDecode(
     iterations++;
     if (isZero()) return { e0, e1, iterations: iterations - 1, success: true };
 
-    const T = computeThreshold(weight(s), d);
+    const sWeightBefore = weight(s);
+    const T = computeThreshold(sWeightBefore, d);
 
     const c0 = counters(h0Supp);
     const c1 = counters(h1Supp);
 
+    // Capture the pre-flip snapshot for the trace (if requested) before mutating.
+    const flips0: number[] = [];
+    const flips1: number[] = [];
+
     let flipped = false;
     for (let j = 0; j < r; j++) {
-      if (c0[j] >= T) { flip(e0, h0Supp, j); flipped = true; }
+      if (c0[j] >= T) { flip(e0, h0Supp, j); flipped = true; flips0.push(j); }
     }
     for (let j = 0; j < r; j++) {
-      if (c1[j] >= T) { flip(e1, h1Supp, j); flipped = true; }
+      if (c1[j] >= T) { flip(e1, h1Supp, j); flipped = true; flips1.push(j); }
+    }
+
+    if (trace) {
+      trace.push({
+        iteration: iter,
+        threshold: T,
+        syndromeWeight: sWeightBefore,
+        counters0: Array.from(c0),
+        counters1: Array.from(c1),
+        flips0,
+        flips1,
+        syndromeWeightAfter: weight(s),
+      });
     }
 
     if (!flipped) break;
@@ -461,9 +505,11 @@ export async function bikeDecap(
   // Since c0 = e0 + e1 * h and h = h0^{-1} * h1 (in circulant ring),
   // c0 * h0 = e0 * h0 + e1 * h1
   const syndrome = polyMul(c0, h0, SIM_R);
+  const initialSyndrome = getPositions(syndrome);
 
-  // Decode using BGF
-  const result = bgfDecode(syndrome, h0, h1, SIM_R);
+  // Decode using BGF, collecting a per-iteration trace for visualization.
+  const trace: BgfStep[] = [];
+  const result = bgfDecode(syndrome, h0, h1, SIM_R, 10, trace);
 
   // Derive shared secret from recovered error
   const eBuf = new Uint8Array(SIM_R * 2);
@@ -482,6 +528,9 @@ export async function bikeDecap(
     decoderIterations: result.iterations,
     success: result.success,
     timingMs,
+    initialSyndrome,
+    initialSyndromeWeight: initialSyndrome.length,
+    trace,
   };
 }
 

@@ -173,6 +173,18 @@
     <section id="panel-1" class="panel active" role="tabpanel" aria-labelledby="tab-1">
       <h2 tabindex="-1">Code-Based Cryptography Primer</h2>
 
+      <details class="terms-strip">
+        <summary class="terms-summary">Coding-theory terms used on this page (tap to expand)</summary>
+        <dl class="terms-list">
+          <div class="term-item"><dt>Syndrome</dt><dd>The result <code>s = H·r</code>. Zero means <code>r</code> is a valid codeword; a non-zero syndrome encodes <em>where</em> the errors are.</dd></div>
+          <div class="term-item"><dt>Weight</dt><dd>How many 1-bits a vector has. "Sparse" = low weight; the private rows have weight w/2 = 71, the error has weight t.</dd></div>
+          <div class="term-item"><dt>Circulant</dt><dd>A square matrix in which each row is the row above it, shifted one step to the right (wrapping around). Fully described by its first row.</dd></div>
+          <div class="term-item"><dt>Ring F₂[x]/(xʳ−1)</dt><dd>Polynomials with 0/1 coefficients where <code>xʳ = 1</code>. Multiplying by <code>x</code> is exactly a cyclic shift — so a circulant matrix <em>is</em> a polynomial in this ring.</dd></div>
+          <div class="term-item"><dt>Systematic form</dt><dd>A code layout where the message bits appear verbatim inside the codeword, followed by parity bits — so decoding just reads off the first block.</dd></div>
+          <div class="term-item"><dt>LPN</dt><dd>Learning Parity with Noise — recovering a secret from many noisy linear equations over F₂. The average-case hard problem underneath BIKE.</dd></div>
+        </dl>
+      </details>
+
       <div class="card">
         <h3>Error-Correcting Codes: The Foundation</h3>
         <p>Error-correcting codes (ECCs) allow a sender to encode data so that a receiver can detect and <em>correct</em> errors introduced during transmission. Cryptographers discovered that the <strong>difficulty of decoding a random linear code</strong> can be used as the basis for a public-key cryptosystem.</p>
@@ -218,13 +230,22 @@
           </div>
           <p class="visual-caption"><strong>BIKE-1 (Level 1):</strong> r = 12,323 — each circulant block defined by a row of weight w/2 = 71</p>
         </div>
+
+        <h4 class="subhead">See it: one row builds a whole block</h4>
+        <p>The static <code>[H₀ | H₁]</code> box above just <em>asserts</em> "circulant." Here's the same idea you can poke. Toggle a bit in the first row and watch every other row — the same row shifted one step right — re-fill the block. That is what <strong>quasi-cyclic</strong> means, and why one short row is enough to store the whole matrix.</p>
+        <div id="circulant-demo" class="circulant-container" aria-label="Interactive circulant block builder"></div>
       </div>
 
-      <div class="card">
-        <h3>The LPN Hardness Assumption</h3>
-        <p>BIKE's security rests on the <strong>Learning Parity with Noise (LPN)</strong> problem — specifically, the difficulty of decoding a random quasi-cyclic code. Given a random syndrome <code>s = H · e</code> where <strong>e</strong> is a sparse error vector, recovering <strong>e</strong> is believed to be hard even for quantum computers.</p>
-        <p>This is related to the <strong>Syndrome Decoding Problem</strong>, which has been studied since the 1960s and is NP-hard in the worst case.</p>
-      </div>
+      <details class="deeper-card card">
+        <summary class="deeper-summary">
+          <span class="deeper-chip">Go deeper</span>
+          The LPN / Syndrome-Decoding hardness assumption
+        </summary>
+        <div class="deeper-body">
+          <p>BIKE's security rests on the <strong><abbr class="term" title="Learning Parity with Noise: given many noisy linear equations over F₂, recover the secret. The average-case hardness BIKE relies on.">Learning Parity with Noise (LPN)</abbr></strong> problem — specifically, the difficulty of decoding a random quasi-cyclic code. Given a random <abbr class="term" title="Syndrome: s = H·r. Zero means r is a valid codeword; non-zero encodes where the errors are.">syndrome</abbr> <code>s = H · e</code> where <strong>e</strong> is a sparse error vector, recovering <strong>e</strong> is believed to be hard even for quantum computers.</p>
+          <p>This is related to the <strong>Syndrome Decoding Problem</strong>, which has been studied since the 1960s and is NP-hard in the worst case.</p>
+        </div>
+      </details>
 
       <div class="card bridge-card">
         <h3>From Codes to Key Encapsulation</h3>
@@ -305,6 +326,12 @@
             <p>This is the systematic form of the code — knowing h without the sparse factorization doesn't help decode.</p>
           </div>
         </div>
+
+        <h4 class="subhead">See the trapdoor: sparse private vs dense public</h4>
+        <div id="keyviz-prereq" class="prereq-notice" role="status">
+          <p>Generate a keypair above to see the private key's sparse structure disappear into the public key.</p>
+        </div>
+        <div id="keyviz" class="keyviz-container" aria-label="Sparse private key versus dense public key visualization" hidden></div>
       </div>
 
       <div class="card">
@@ -388,6 +415,12 @@
 
           <button id="decap-btn" class="btn btn-secondary btn-large" disabled aria-label="Decapsulate: recover shared secret from ciphertext">Decapsulate (Bob)</button>
           <div id="decap-output" class="output-area" aria-live="polite" role="status"></div>
+
+          <div id="decoder-viz-wrap" class="decoder-viz-wrap" hidden>
+            <h4 class="subhead">Watch the Black-Gray-Flip decoder run</h4>
+            <p class="dv-intro">Decapsulation computes the syndrome and then flips bits to drive it to zero. Step or play through the real iterations below: bits whose unsatisfied-check counter reaches the threshold T are <strong>Black</strong> and get flipped; bits one short are <strong>Gray</strong>. Watch the syndrome weight fall toward zero — or, on a rare failure, stall.</p>
+            <div id="decoder-viz" aria-label="Black-Gray-Flip decoder step-by-step visualization"></div>
+          </div>
 
           <div id="kem-match" class="match-indicator" aria-live="assertive" role="status" style="display:none;"></div>
         </div>
