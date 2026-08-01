@@ -125,8 +125,9 @@
     else dedupeBanner();
   })();
 </script>
-  <!-- Skip link -->
-  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <!-- Skip link lives above the sticky topbar (.cl-skip-link) so it is the first
+       focusable element and can actually bypass the bar — WCAG 2.4.1. A second one
+       here would land after the bar and duplicate the announcement. -->
 
   <!-- Header -->
   <header class="site-header cl-hero" role="banner">
