@@ -19,14 +19,22 @@
  * - Polynomial inversion in F₂[x]/(x^r − 1) via extended GCD
  * - Public key computation h = h0^{-1} · h1
  * - Encapsulation with sparse error vector
- * - Syndrome computation and Black-Gray-Flip (BGF) decoding using the
- *   specification's affine/majority counter threshold (not an ad-hoc heuristic)
+ * - Syndrome computation and the full Black-Gray-Flip decoder: the spec's affine
+ *   threshold recomputed per iteration against THIS module's r, the Black and Gray
+ *   masks, and both masked correction passes on the first iteration
  * - Shared secret derivation via SHA-256
+ *
+ * Measured decoding-failure rate at the simulation parameters: about 0.5% of
+ * decodes (≈ 2⁻⁷·⁶), over 10,000 trials with a fresh keypair every 50. That is
+ * the cost of the reduced r, not a property of BIKE — spec BIKE Level 1 targets
+ * below 2⁻¹²⁸. Anywhere the UI quotes a DFR it says which of the two it means.
  *
  * Honest caveats (see the in-app "Ciphertext c₁" note):
  * - c₁ is emitted as 32 random bytes; the Fujisaki–Okamoto (IND-CCA) transform
  *   is NOT implemented, so decapsulation does not re-encrypt to verify. Decoding
  *   recovers the error directly. This is disclosed in the UI.
+ * - Nothing here is constant-time; the decoder's data-dependent branching would
+ *   be a side channel in a real deployment.
  *
  * References:
  * - BIKE Specification: https://bikesuite.org
@@ -267,20 +275,37 @@ export async function bikeKeyGen(): Promise<BikeKeyPair> {
   };
 }
 
-/** BIKE Level 1 Encapsulation */
-export async function bikeEncap(publicKey: Uint8Array): Promise<EncapResult> {
+/** Unpack a bit-packed polynomial back to one byte per coefficient. */
+export function unpackPoly(packed: Uint8Array, r: number): Uint8Array {
+  const poly = zeroPoly(r);
+  for (let i = 0; i < r; i++) {
+    poly[i] = ((packed[i >> 3] >> (i & 7)) & 1) as 0 | 1;
+  }
+  return poly;
+}
+
+/**
+ * BIKE Encapsulation (simulation parameters).
+ *
+ * `errorWeight` defaults to the parameter set's own t. Raising it above t is not
+ * something a real sender can do — it is the demo's tamper control, which pushes
+ * the error past what the decoder is provisioned to correct so the learner can
+ * watch the decoding-failure rate climb instead of reading it as a constant.
+ */
+export async function bikeEncap(
+  publicKey: Uint8Array,
+  errorWeight: number = SIM_T,
+): Promise<EncapResult> {
   const t0 = performance.now();
 
   // Unpack public key h
-  const h = zeroPoly(SIM_R);
-  for (let i = 0; i < SIM_R; i++) {
-    h[i] = ((publicKey[i >> 3] >> (i & 7)) & 1) as 0 | 1;
-  }
+  const h = unpackPoly(publicKey, SIM_R);
 
   // Generate random error vector e = (e0, e1) of total weight t
   // Split: e0 has weight ceil(t/2), e1 has weight floor(t/2)
-  const w0 = Math.ceil(SIM_T / 2);
-  const w1 = SIM_T - w0;
+  const t = Math.max(0, Math.min(errorWeight, 2 * SIM_R));
+  const w0 = Math.ceil(t / 2);
+  const w1 = t - w0;
   const { poly: e0, positions: e0Pos } = randomSparsePoly(SIM_R, w0);
   const { poly: e1, positions: e1Pos } = randomSparsePoly(SIM_R, w1);
 
@@ -327,76 +352,137 @@ function weight(p: Uint8Array): number {
   return w;
 }
 
+// --- BGF threshold: spec affine rule, re-expressed in scale-free coordinates ---
+
+/** BIKE Level 1 reference threshold line: T = 0.0069722·S + 13.530, floor 36. */
+const SPEC_THRESHOLD_SLOPE = 0.0069722;
+const SPEC_THRESHOLD_INTERCEPT = 13.530;
+const SPEC_R = BIKE_PARAMS[1].r;          // 12323
+const SPEC_D = BIKE_PARAMS[1].w / 2;      // 71 — column weight of a circulant block
+
 /**
- * BGF affine threshold rule (BIKE specification, Algorithm 2 "computeThreshold").
- *
- * The BIKE spec defines the flipping threshold as an affine function of the
- * current syndrome weight S, clamped below by the majority-vote value:
- *
- *   T = max( ⌊ threshold_coeff0 + threshold_coeff1 · S ⌋ , (d+1)/2 )
- *
- * where d = w/2 is the column weight of each circulant block. The reference
- * BIKE Level 1 coefficients are tuned for r = 12323 (0.0069722 · S + 13.530). For
- * the reduced simulation parameters we re-derive coefficients from the same
- * linear model so the threshold tracks syndrome weight the way real BIKE does,
- * rather than the previous ad-hoc `maxCnt · 0.75 / 0.55` heuristic.
- *
- * The floor (d+1)/2 is the classic bit-flipping majority threshold: a bit is
- * flipped once *more than half* of the checks touching it are unsatisfied.
- * This guarantees each flip cannot increase the syndrome weight in the
- * majority regime, which is the correctness property the old heuristic lacked.
+ * The spec line, rewritten in the two quantities that actually set the scale:
+ *   x = S / r   (syndrome *density* — what fraction of parity checks are unsatisfied)
+ *   y = T / d   (threshold as a fraction of the checks touching one bit)
+ * so   y = NORM_SLOPE · x + NORM_INTERCEPT.
+ * A counter can never exceed d and a syndrome weight can never exceed r, so these
+ * are the natural units; the spec's own coefficients are recovered exactly when
+ * r = 12323 and d = 71.
  */
-export function computeThreshold(syndromeWeight: number, d: number): number {
-  // Slope scaled to the simulation block size (587 vs the spec's 12323) so the
-  // affine term contributes on the same relative scale; intercept anchored at
-  // the majority value. These reduce to sensible integers for w/2 = 7.
-  const slope = 13.53 / 12323; // ≈ spec slope re-anchored per-r
-  const intercept = (d + 1) / 2;
-  const affine = Math.floor(intercept + slope * syndromeWeight);
+const NORM_SLOPE = (SPEC_THRESHOLD_SLOPE * SPEC_R) / SPEC_D;   // ≈ 1.2101
+const NORM_INTERCEPT = SPEC_THRESHOLD_INTERCEPT / SPEC_D;      // ≈ 0.19056
+
+/**
+ * BGF flipping threshold (BIKE specification, "computeThreshold").
+ *
+ *   T = clamp( ⌊ d · (NORM_SLOPE · S/r + NORM_INTERCEPT) ⌋ , (d+1)/2 , d )
+ *
+ * The threshold is an affine function of the *live* syndrome weight S, so it
+ * falls as the decoder eats the error and rises when the error is heavy. It is
+ * floored by the majority value (d+1)/2 — the classic bit-flipping rule, "flip a
+ * bit once more than half of the checks touching it are unsatisfied" — and capped
+ * at d, above which nothing could ever flip.
+ *
+ * `r` defaults to the simulation's own block size, NOT the spec's 12323: an
+ * earlier version divided by 12323 while running at r = 587, which pinned T to
+ * the majority floor of 4 for every syndrome weight the simulation can produce.
+ *
+ * Honest note about the reduced parameters: with d = 7 the whole usable range is
+ * T ∈ {4,5,6,7}, and at the shipped error weight (t = 13, syndrome density ≈ 0.15)
+ * the line genuinely evaluates below the majority floor, so T = 4 is the correct
+ * answer, not a stuck constant. Push the error weight up with the tamper slider
+ * and the syndrome density rises far enough that T climbs to 5 and beyond — which
+ * is the behaviour real BIKE shows across its own iteration sequence.
+ */
+export function computeThreshold(syndromeWeight: number, d: number, r: number = SIM_R): number {
+  const affine = Math.floor(d * (NORM_SLOPE * (syndromeWeight / r) + NORM_INTERCEPT));
   const majority = Math.floor((d + 1) / 2);
-  return Math.max(affine, majority);
+  return Math.min(Math.max(affine, majority), d);
 }
 
 /**
- * Black-Gray-Flip Decoder — BGF as specified in the BIKE submission.
- *
- * Structure (BIKE spec Algorithm 1):
- *   Iteration 0: BitFlipIter with threshold T, then record Black/Gray masks
- *                and run two fixed correction passes over them.
- *   Iterations 1..NbIter-1: plain BitFlipIter with threshold T.
- *
- * The threshold T is recomputed each iteration from the live syndrome weight
- * via the affine rule above — this is the behaviour that makes decoding
- * failures match the real DFR curve instead of decoding "by luck".
+ * Gray band width τ (BIKE spec uses τ = 3 at every level, where d = 71).
+ * A bit is Gray when T − τ ≤ counter < T. Scaled to this block's column weight so
+ * the band stays the same *fraction* of the counter range; at d = 7 that is τ = 1,
+ * i.e. Gray = "exactly one check short of the threshold", which is what the
+ * decoder visualization's legend shows.
  */
+export function grayBand(d: number): number {
+  return Math.max(1, Math.round((3 * d) / SPEC_D));
+}
+
+/** Number of BGF iterations (NbIter in the BIKE spec). */
+export const BGF_ITERATIONS = 10;
+
 /**
- * One recorded snapshot of the decoder BEFORE the flips of a given iteration are
- * applied, capturing exactly the state a learner needs to watch a bit-flipping
- * round unfold: the live syndrome weight, the flip threshold T, and — per bit —
- * how many unsatisfied parity checks touch it (the "counter"). Bits whose counter
- * is at or above T are Black (flipped this round); bits one short of T are Gray
- * (on the bubble). The `flips` list is which bits actually flipped this round.
+ * One recorded snapshot of a full BGF iteration, capturing exactly the state a
+ * learner needs to watch the round unfold: the live syndrome weight, the flip
+ * threshold T, and — per bit — how many unsatisfied parity checks touch it (the
+ * "counter"). Bits whose counter is at or above T are Black; bits within the Gray
+ * band below T are Gray.
  *
- * This is emitted by the real decoder loop, not reconstructed after the fact —
+ * Iteration 0 has three phases (Black flip, Black correction, Gray correction) and
+ * records the syndrome weight after each; later iterations record only the first.
+ *
+ * This is emitted by the real bgfDecode loop, not reconstructed after the fact —
  * the visualization shows the same arithmetic the KEM round-trip test verifies.
  */
 export interface BgfStep {
   iteration: number;        // 0-based iteration index
   threshold: number;        // flip threshold T for this iteration
+  grayBand: number;         // τ: a bit is Gray when T − τ ≤ counter < T
+  maskedThreshold: number;  // (d+1)/2 — threshold used by the two correction passes
   syndromeWeight: number;   // weight of the syndrome at the start of this iteration
   counters0: number[];      // unsatisfied-check counter per bit of block 0
   counters1: number[];      // unsatisfied-check counter per bit of block 1
-  flips0: number[];         // positions in block 0 flipped this iteration
-  flips1: number[];         // positions in block 1 flipped this iteration
-  syndromeWeightAfter: number; // syndrome weight after this iteration's flips
+  black0: number[];         // Black mask, block 0 (counter ≥ T) — flipped by BFIter
+  black1: number[];         // Black mask, block 1
+  gray0: number[];          // Gray mask, block 0 (T − τ ≤ counter < T) — not yet flipped
+  gray1: number[];          // Gray mask, block 1
+  flips0: number[];         // block 0 bits flipped by the BFIter pass (== black0)
+  flips1: number[];         // block 1 bits flipped by the BFIter pass (== black1)
+  blackUndo0: number[];     // block 0 bits UN-flipped by the Black correction pass
+  blackUndo1: number[];     // block 1 bits un-flipped by the Black correction pass
+  grayFlips0: number[];     // block 0 Gray bits flipped by the Gray correction pass
+  grayFlips1: number[];     // block 1 Gray bits flipped by the Gray correction pass
+  masked: boolean;          // true when the two correction passes ran (iteration 0)
+  syndromeWeightAfterBlack: number; // weight after the BFIter (Black) flips
+  syndromeWeightAfterBlackPass: number; // weight after the Black correction pass
+  syndromeWeightAfter: number;      // weight at the end of the whole iteration
 }
 
+/**
+ * Black-Gray-Flip Decoder — BGF as specified in the BIKE submission (Algorithm 1).
+ *
+ *   for i in 0 .. NbIter−1:
+ *     T ← computeThreshold(|s|)
+ *     (e, black, gray) ← BFIter(s, e, T, H)      // flip every Black bit
+ *     if i == 0:
+ *       e ← BFMaskedIter(s, e, black, (d+1)/2, H)  // undo Black flips that still look wrong
+ *       e ← BFMaskedIter(s, e, gray,  (d+1)/2, H)  // flip Gray bits that now look wrong
+ *
+ * The three phases are what make BGF more than a bit-flipping loop:
+ *
+ * - **BFIter** computes every counter against the *same* start-of-iteration
+ *   syndrome and flips all Black bits simultaneously. Bits that fell in the Gray
+ *   band (one to τ checks short of T) are recorded but deliberately NOT flipped.
+ * - **Black correction pass** recomputes counters against the now-updated syndrome
+ *   and re-flips (i.e. undoes) any Black bit that still shows ≥ (d+1)/2 unsatisfied
+ *   checks. A bit that was flipped in error usually looks *worse* afterwards, so
+ *   this is how BGF walks back its own mistakes — the single biggest contributor to
+ *   its low decoding-failure rate versus a plain threshold decoder.
+ * - **Gray correction pass** gives the bits that were on the bubble a second look
+ *   against the updated syndrome; the ones that have now crossed (d+1)/2 get flipped.
+ *
+ * Both correction passes are *masked*: they only touch bits in their mask, never
+ * the rest of the codeword.
+ */
 export function bgfDecode(
   syndrome: Uint8Array,
   h0: Uint8Array,
   h1: Uint8Array,
   r: number,
-  maxIter: number = 10,
+  maxIter: number = BGF_ITERATIONS,
   trace?: BgfStep[],
 ): { e0: Uint8Array; e1: Uint8Array; iterations: number; success: boolean } {
   // Working copies
@@ -411,7 +497,9 @@ export function bgfDecode(
     if (h0[i]) h0Supp.push(i);
     if (h1[i]) h1Supp.push(i);
   }
-  const d = h0Supp.length; // column weight = w/2
+  const d = h0Supp.length;               // column weight = w/2
+  const tau = grayBand(d);               // Gray band width
+  const maskedT = Math.floor((d + 1) / 2); // threshold for the two correction passes
 
   function isZero(): boolean {
     for (let i = 0; i < r; i++) if (s[i]) return false;
@@ -435,44 +523,105 @@ export function bgfDecode(
     for (const k of supp) s[(j + k) % r] ^= 1;
   }
 
+  /** BFMaskedIter: re-flip masked bits whose counter has reached `t` against the
+   *  CURRENT syndrome. Returns the positions it touched. */
+  function maskedPass(e: Uint8Array, supp: number[], mask: number[], t: number): number[] {
+    if (mask.length === 0) return [];
+    const c = counters(supp);
+    const touched: number[] = [];
+    for (const j of mask) {
+      if (c[j] >= t) touched.push(j);
+    }
+    for (const j of touched) flip(e, supp, j);
+    return touched;
+  }
+
   let iterations = 0;
 
   for (let iter = 0; iter < maxIter; iter++) {
+    if (isZero()) break;
     iterations++;
-    if (isZero()) return { e0, e1, iterations: iterations - 1, success: true };
 
     const sWeightBefore = weight(s);
-    const T = computeThreshold(sWeightBefore, d);
+    const T = computeThreshold(sWeightBefore, d, r);
 
+    // --- Phase 1: BFIter. Counters are taken against the start-of-iteration
+    // syndrome, then every Black bit flips at once. Gray bits are only recorded. ---
     const c0 = counters(h0Supp);
     const c1 = counters(h1Supp);
 
-    // Capture the pre-flip snapshot for the trace (if requested) before mutating.
-    const flips0: number[] = [];
-    const flips1: number[] = [];
+    const black0: number[] = [];
+    const black1: number[] = [];
+    const gray0: number[] = [];
+    const gray1: number[] = [];
 
-    let flipped = false;
     for (let j = 0; j < r; j++) {
-      if (c0[j] >= T) { flip(e0, h0Supp, j); flipped = true; flips0.push(j); }
+      if (c0[j] >= T) black0.push(j);
+      else if (c0[j] >= T - tau) gray0.push(j);
     }
     for (let j = 0; j < r; j++) {
-      if (c1[j] >= T) { flip(e1, h1Supp, j); flipped = true; flips1.push(j); }
+      if (c1[j] >= T) black1.push(j);
+      else if (c1[j] >= T - tau) gray1.push(j);
     }
+
+    for (const j of black0) flip(e0, h0Supp, j);
+    for (const j of black1) flip(e1, h1Supp, j);
+    const wAfterBlack = weight(s);
+
+    // --- Phases 2 and 3: the two masked correction passes, first iteration only. ---
+    let blackUndo0: number[] = [];
+    let blackUndo1: number[] = [];
+    let grayFlips0: number[] = [];
+    let grayFlips1: number[] = [];
+    let wAfterBlackPass = wAfterBlack;
+    const masked = iter === 0;
+
+    if (masked) {
+      // Black correction: a Black bit that STILL has ≥ (d+1)/2 unsatisfied checks
+      // against the updated syndrome was flipped in error — flip it back.
+      blackUndo0 = maskedPass(e0, h0Supp, black0, maskedT);
+      blackUndo1 = maskedPass(e1, h1Supp, black1, maskedT);
+      wAfterBlackPass = weight(s);
+
+      // Gray correction: bits that were on the bubble get a second look now that
+      // the Black flips have changed the syndrome underneath them.
+      grayFlips0 = maskedPass(e0, h0Supp, gray0, maskedT);
+      grayFlips1 = maskedPass(e1, h1Supp, gray1, maskedT);
+    }
+
+    const wAfter = weight(s);
 
     if (trace) {
       trace.push({
         iteration: iter,
         threshold: T,
+        grayBand: tau,
+        maskedThreshold: maskedT,
         syndromeWeight: sWeightBefore,
         counters0: Array.from(c0),
         counters1: Array.from(c1),
-        flips0,
-        flips1,
-        syndromeWeightAfter: weight(s),
+        black0,
+        black1,
+        gray0,
+        gray1,
+        flips0: black0,
+        flips1: black1,
+        blackUndo0,
+        blackUndo1,
+        grayFlips0,
+        grayFlips1,
+        masked,
+        syndromeWeightAfterBlack: wAfterBlack,
+        syndromeWeightAfterBlackPass: wAfterBlackPass,
+        syndromeWeightAfter: wAfter,
       });
     }
 
-    if (!flipped) break;
+    const touched =
+      black0.length + black1.length +
+      blackUndo0.length + blackUndo1.length +
+      grayFlips0.length + grayFlips1.length;
+    if (touched === 0) break; // stalled — no bit crossed any threshold
   }
 
   return { e0, e1, iterations, success: isZero() };
@@ -486,22 +635,14 @@ export async function bikeDecap(
 ): Promise<DecapResult> {
   const t0 = performance.now();
 
-  // Unpack c0
-  const c0 = zeroPoly(SIM_R);
-  for (let i = 0; i < SIM_R; i++) {
-    c0[i] = ((ciphertext[i >> 3] >> (i & 7)) & 1) as 0 | 1;
-  }
-  // c1 is the remaining 32 bytes, not needed for pure BGF decoding
+  // Unpack c0 (c1 is the remaining 32 bytes, not needed for pure BGF decoding)
+  const c0 = unpackPoly(ciphertext, SIM_R);
 
   // Unpack private key
-  const h0 = zeroPoly(SIM_R);
-  const h1 = zeroPoly(SIM_R);
-  for (let i = 0; i < SIM_R; i++) {
-    h0[i] = ((privateH0[i >> 3] >> (i & 7)) & 1) as 0 | 1;
-    h1[i] = ((privateH1[i >> 3] >> (i & 7)) & 1) as 0 | 1;
-  }
+  const h0 = unpackPoly(privateH0, SIM_R);
+  const h1 = unpackPoly(privateH1, SIM_R);
 
-  // Compute syndrome: s = c0 * h0. 
+  // Compute syndrome: s = c0 * h0.
   // Since c0 = e0 + e1 * h and h = h0^{-1} * h1 (in circulant ring),
   // c0 * h0 = e0 * h0 + e1 * h1
   const syndrome = polyMul(c0, h0, SIM_R);
@@ -509,7 +650,7 @@ export async function bikeDecap(
 
   // Decode using BGF, collecting a per-iteration trace for visualization.
   const trace: BgfStep[] = [];
-  const result = bgfDecode(syndrome, h0, h1, SIM_R, 10, trace);
+  const result = bgfDecode(syndrome, h0, h1, SIM_R, BGF_ITERATIONS, trace);
 
   // Derive shared secret from recovered error
   const eBuf = new Uint8Array(SIM_R * 2);
@@ -531,6 +672,95 @@ export async function bikeDecap(
     initialSyndrome,
     initialSyndromeWeight: initialSyndrome.length,
     trace,
+  };
+}
+
+// --- Empirical decoding-failure-rate measurement ---
+
+/**
+ * One decode trial at a chosen error weight, with the hashing and packing stripped
+ * out so a few hundred trials run inside a frame budget. Plants a fresh random error
+ * of weight `errorWeight`, forms the true syndrome, and reports whether BGF got back
+ * to a zero syndrome AND recovered exactly the planted error.
+ *
+ * A "success" here is the strict condition: reaching a zero syndrome with a
+ * *different* error vector is still a decapsulation failure, because Alice and Bob
+ * then derive different shared secrets. Counting those as successes would flatter
+ * the decoder.
+ */
+export function decodeTrial(
+  h0: Uint8Array,
+  h1: Uint8Array,
+  errorWeight: number,
+  r: number = SIM_R,
+): { success: boolean; iterations: number; syndromeWeight: number; thresholds: number[] } {
+  const t = Math.max(0, Math.min(errorWeight, 2 * r));
+  const w0 = Math.ceil(t / 2);
+  const { poly: e0 } = randomSparsePoly(r, w0);
+  const { poly: e1 } = randomSparsePoly(r, t - w0);
+
+  const s0 = polyMul(e0, h0, r);
+  const s1 = polyMul(e1, h1, r);
+  const s = zeroPoly(r);
+  for (let i = 0; i < r; i++) s[i] = (s0[i] ^ s1[i]) as 0 | 1;
+  const syndromeWeight = weight(s);
+
+  const trace: BgfStep[] = [];
+  const res = bgfDecode(s, h0, h1, r, BGF_ITERATIONS, trace);
+
+  let exact = res.success;
+  if (exact) {
+    for (let i = 0; i < r; i++) {
+      if (res.e0[i] !== e0[i] || res.e1[i] !== e1[i]) { exact = false; break; }
+    }
+  }
+  return {
+    success: exact,
+    iterations: res.iterations,
+    syndromeWeight,
+    thresholds: trace.map((st) => st.threshold),
+  };
+}
+
+export interface DfrSample {
+  errorWeight: number;
+  trials: number;
+  failures: number;
+  rate: number;              // failures / trials
+  avgIterations: number;
+  avgSyndromeWeight: number;
+  thresholds: number[];      // distinct thresholds the decoder actually used, ascending
+}
+
+/** Run `trials` decode trials at one error weight against a fixed private key. */
+export function measureDfr(
+  privateH0: Uint8Array,
+  privateH1: Uint8Array,
+  errorWeight: number,
+  trials: number,
+  r: number = SIM_R,
+): DfrSample {
+  const h0 = unpackPoly(privateH0, r);
+  const h1 = unpackPoly(privateH1, r);
+  let failures = 0;
+  let iterTotal = 0;
+  let synTotal = 0;
+  const thresholds = new Set<number>();
+  for (let i = 0; i < trials; i++) {
+    const res = decodeTrial(h0, h1, errorWeight, r);
+    if (!res.success) failures++;
+    iterTotal += res.iterations;
+    synTotal += res.syndromeWeight;
+    for (const th of res.thresholds) thresholds.add(th);
+  }
+  return {
+    errorWeight,
+    trials,
+    failures,
+    rate: trials > 0 ? failures / trials : 0,
+    avgIterations: trials > 0 ? iterTotal / trials : 0,
+    avgSyndromeWeight: trials > 0 ? synTotal / trials : 0,
+    thresholds: [...thresholds].sort((a, b) => a - b),
   };
 }
 

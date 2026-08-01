@@ -35,6 +35,7 @@ export interface KeyVizData {
   h1Positions: number[];
   hPositions: number[];
   r: number;
+  specHalfWeight: number;  // w/2 at spec BIKE Level 1, for the "and at full size" aside
 }
 
 /** Attach the sparse-vs-dense trapdoor visualization to a container. */
@@ -60,7 +61,8 @@ export function renderKeyViz(container: HTMLElement, data: KeyVizData): void {
       </div>
     </div>
     <p class="kv-caption">
-      The private key is two sparse rows (weight 7 each) — the trapdoor that makes decoding easy.
+      The private key is two sparse rows (weight ${data.h0Positions.length} and ${data.h1Positions.length}
+      here — w/2; spec BIKE Level 1 uses ${data.specHalfWeight}) — the trapdoor that makes decoding easy.
       Multiplying by h₀⁻¹ smears that structure into <strong>h</strong>, a ~half-full pattern with no
       visible sparsity. Recovering the sparse factorization from h alone is the hard problem BIKE rests on:
       to anyone without (h₀, h₁), h looks like a random code.

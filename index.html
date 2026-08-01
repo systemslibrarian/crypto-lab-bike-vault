@@ -203,7 +203,7 @@
         <summary class="terms-summary">Coding-theory terms used on this page (tap to expand)</summary>
         <dl class="terms-list">
           <div class="term-item"><dt>Syndrome</dt><dd>The result <code>s = H·r</code>. Zero means <code>r</code> is a valid codeword; a non-zero syndrome encodes <em>where</em> the errors are.</dd></div>
-          <div class="term-item"><dt>Weight</dt><dd>How many 1-bits a vector has. "Sparse" = low weight; the private rows have weight w/2 = 71, the error has weight t.</dd></div>
+          <div class="term-item"><dt>Weight</dt><dd>How many 1-bits a vector has. "Sparse" = low weight; the private rows have weight w/2 (<span data-param="sim-half-w"></span> at this page's simulation parameters, <span data-param="spec-half-w"></span> at spec BIKE Level 1), and the error has weight t.</dd></div>
           <div class="term-item"><dt>Circulant</dt><dd>A square matrix in which each row is the row above it, shifted one step to the right (wrapping around). Fully described by its first row.</dd></div>
           <div class="term-item"><dt>Ring F₂[x]/(xʳ−1)</dt><dd>Polynomials with 0/1 coefficients where <code>xʳ = 1</code>. Multiplying by <code>x</code> is exactly a cyclic shift — so a circulant matrix <em>is</em> a polynomial in this ring.</dd></div>
           <div class="term-item"><dt>Systematic form</dt><dd>A code layout where the message bits appear verbatim inside the codeword, followed by parity bits — so decoding just reads off the first block.</dd></div>
@@ -254,7 +254,7 @@
             </div>
             <div class="matrix-bracket" aria-hidden="true">]</div>
           </div>
-          <p class="visual-caption"><strong>BIKE Level 1:</strong> r = 12,323 — each circulant block defined by a row of weight w/2 = 71</p>
+          <p class="visual-caption"><strong>Spec BIKE Level 1:</strong> r = <span data-param="spec-r"></span> — each circulant block defined by a row of weight w/2 = <span data-param="spec-half-w"></span>. <strong>This page's simulation:</strong> r = <span data-param="sim-r"></span>, w/2 = <span data-param="sim-half-w"></span>.</p>
         </div>
 
         <h4 class="subhead">See it: one row builds a whole block</h4>
@@ -289,7 +289,7 @@
           <span class="status-chip status-round4" aria-label="NIST Status: Round 4 Alternate Candidate">NIST Round 4 Alternate</span>
           <span class="status-chip status-sim" aria-label="Simulation status: Illustrative, not production BIKE">⚠ Illustrative — not production BIKE</span>
         </div>
-        <p>BIKE key generation produces a keypair using QC-MDPC code structure. We use <strong>BIKE Level 1</strong> parameters for speed in the browser.</p>
+        <p>BIKE key generation produces a keypair using QC-MDPC code structure. This page runs the <strong>BIKE Level 1 structure at reduced parameters</strong> so every step completes instantly in the browser: <strong>r = <span data-param="sim-r"></span>, w = <span data-param="sim-w"></span> (w/2 = <span data-param="sim-half-w"></span> per block), t = <span data-param="sim-t"></span></strong>. Spec BIKE Level 1 is r = <span data-param="spec-r"></span>, w = <span data-param="spec-w"></span>, t = <span data-param="spec-t"></span> — the table below is the published spec, not what runs here.</p>
         <div class="param-table-wrapper">
           <table class="param-table" aria-label="BIKE parameter sets from NIST Round 4 submission">
             <caption>BIKE Parameter Sets (NIST Round 4 Submission Spec)</caption>
@@ -331,10 +331,10 @@
       </div>
 
       <div class="card">
-        <h3>Generate BIKE Level 1 Keypair</h3>
-        <button id="keygen-btn" class="btn btn-primary btn-large" aria-label="Generate BIKE Level 1 key pair">Generate Keypair</button>
+        <h3>Generate a Keypair (r = <span data-param="sim-r"></span>, w = <span data-param="sim-w"></span>, t = <span data-param="sim-t"></span>)</h3>
+        <button id="keygen-btn" class="btn btn-primary btn-large" aria-label="Generate a key pair at the simulation parameters">Generate Keypair</button>
         <div id="keygen-output" class="output-area" aria-live="polite" role="status">
-          <p class="placeholder-text">Press "Generate Keypair" to create a BIKE Level 1 key pair.</p>
+          <p class="placeholder-text">Press "Generate Keypair" to create a keypair at the simulation parameters.</p>
         </div>
       </div>
 
@@ -343,7 +343,7 @@
         <div class="key-explainer">
           <div class="key-box">
             <h4>Private Key</h4>
-            <p>A pair of sparse polynomials <strong>(h₀, h₁)</strong> in the ring F₂[x]/(x<sup>r</sup> − 1), each of weight w/2 = 71.</p>
+            <p>A pair of sparse polynomials <strong>(h₀, h₁)</strong> in the ring F₂[x]/(x<sup>r</sup> − 1), each of weight w/2 — <span data-param="sim-half-w"></span> here, <span data-param="spec-half-w"></span> at spec BIKE Level 1.</p>
             <p>These define the sparse rows of the QC-MDPC parity check matrix H = [H₀ | H₁].</p>
           </div>
           <div class="key-box">
@@ -362,37 +362,10 @@
 
       <div class="card">
         <h3>Key Size Comparison</h3>
-        <div class="size-comparison" aria-label="Key size comparison between BIKE, ML-KEM, and RSA">
-          <div class="size-bar-group">
-            <div class="size-bar-label">BIKE Level 1 Public Key</div>
-            <div class="size-bar" style="--bar-pct: 25%;" aria-label="1,541 bytes">
-              <span class="size-bar-fill bike-fill"></span>
-              <span class="size-value">1,541 B</span>
-            </div>
-          </div>
-          <div class="size-bar-group">
-            <div class="size-bar-label">ML-KEM-512 Public Key</div>
-            <div class="size-bar" style="--bar-pct: 13%;" aria-label="800 bytes">
-              <span class="size-bar-fill mlkem-fill"></span>
-              <span class="size-value">800 B</span>
-            </div>
-          </div>
-          <div class="size-bar-group">
-            <div class="size-bar-label">RSA-2048 Public Key</div>
-            <div class="size-bar" style="--bar-pct: 4%;" aria-label="256 bytes">
-              <span class="size-bar-fill rsa-fill"></span>
-              <span class="size-value">256 B</span>
-            </div>
-          </div>
-          <div class="size-bar-group">
-            <div class="size-bar-label">Classic McEliece Public Key</div>
-            <div class="size-bar" style="--bar-pct: 100%;" aria-label="261,120 bytes">
-              <span class="size-bar-fill mceliece-fill"></span>
-              <span class="size-value">261,120 B</span>
-            </div>
-          </div>
+        <div id="key-size-bars">
+          <!-- Bars rendered by compare.ts: lengths computed from the byte counts on a log axis -->
         </div>
-        <p class="note">BIKE achieves much smaller keys than Classic McEliece while staying in the same code-based security family. ML-KEM has the smallest keys overall. RSA-2048 is not post-quantum secure.</p>
+        <p class="note">BIKE achieves much smaller keys than Classic McEliece while staying in the same code-based security family. ML-KEM has the smallest keys overall. RSA-2048 is not post-quantum secure. These are spec figures at NIST security level 1 — the simulation on this page uses far smaller r, so its keys are a few dozen bytes.</p>
       </div>
 
       <div class="card bridge-card">
@@ -411,7 +384,7 @@
         </div>
         <h3>KEM Flow: Alice → Bob</h3>
         <ol class="kem-flow-list">
-          <li><strong>Alice encapsulates:</strong> Using Bob's public key, generates a random error vector <strong>e</strong> of weight t = 134, computes ciphertext <strong>c = e · [1 | h]ᵀ</strong> and derives shared secret <strong>K</strong> from e.</li>
+          <li><strong>Alice encapsulates:</strong> Using Bob's public key, generates a random error vector <strong>e</strong> of weight t (<span data-param="sim-t"></span> in this simulation; <span data-param="spec-t"></span> at spec BIKE Level 1), computes ciphertext <strong>c = e · [1 | h]ᵀ</strong> and derives shared secret <strong>K</strong> from e.</li>
           <li><strong>Bob decapsulates:</strong> Using his private key (h₀, h₁), computes syndrome <strong>s = H · cᵀ</strong>, then applies the <strong>Black-Gray-Flip (BGF) decoder</strong> to recover <strong>e</strong>, and derives the same K.</li>
           <li><strong>Shared secret match:</strong> K<sub>Alice</sub> = K<sub>Bob</sub> — used to key a symmetric cipher.</li>
         </ol>
@@ -419,15 +392,20 @@
 
       <div class="card">
         <h3>The Black-Gray-Flip Decoder</h3>
-        <p>BIKE uses the <strong>Black-Gray-Flip (BGF)</strong> bit-flipping decoder for decapsulation:</p>
+        <p>BIKE uses the <strong>Black-Gray-Flip (BGF)</strong> decoder for decapsulation. The name is the algorithm: <em>Black</em> and <em>Gray</em> are two masks it builds, and the flips it makes to each are what separate BGF from an ordinary threshold bit-flipper. Each of the steps below is a phase you can watch execute in the visualization further down.</p>
         <ol>
-          <li><strong>Compute syndrome:</strong> s = H · cᵀ — reveals the error pattern</li>
-          <li><strong>Classify bits:</strong> Count how many unsatisfied parity checks each bit participates in. Bits exceeding a threshold T are "Black" (high confidence errors), those near T are "Gray" (uncertain).</li>
-          <li><strong>Flip Black bits</strong> in the first iteration — these are almost certainly errors.</li>
-          <li><strong>Subsequent iterations:</strong> Flip both Black and Gray bits, recompute syndrome, repeat.</li>
-          <li><strong>Convergence:</strong> When syndrome reaches zero, the error vector is recovered.</li>
+          <li><strong>Compute the syndrome:</strong> s = H · cᵀ. Zero means no errors; every non-zero bit is an unsatisfied parity check.</li>
+          <li><strong>Set the threshold and classify:</strong> T is recomputed from the <em>live</em> syndrome weight each iteration (affine rule, floored at the majority value (d+1)/2 where d = w/2 = <span data-param="sim-half-w"></span> here). Count each bit's unsatisfied checks: counter ≥ T is <strong>Black</strong>; within τ below T is <strong>Gray</strong>.</li>
+          <li><strong>Flip every Black bit</strong> — all at once, against the same start-of-iteration syndrome. Gray bits are recorded and deliberately left alone for now.</li>
+          <li><strong>Black correction pass</strong> (first iteration): recount against the updated syndrome and <em>un-flip</em> any Black bit that still shows ≥ (d+1)/2 unsatisfied checks. A bit flipped in error usually looks worse afterwards — this is how BGF walks back its own mistakes, and it is the single largest reason its failure rate beats a plain bit-flipping decoder.</li>
+          <li><strong>Gray correction pass</strong> (first iteration): the bits that were on the bubble get a second look now that the Black flips have moved the syndrome underneath them; those that have crossed (d+1)/2 are flipped. Later iterations are plain threshold flips, and the decoder stops when the syndrome reaches zero — or gives up after <span data-param="sim-iters"></span> iterations.</li>
         </ol>
-        <p class="note"><strong>Decapsulation Failure Rate (DFR):</strong> BIKE has a non-zero DFR — the decoder may fail to converge for some error patterns. For BIKE Level 1, DFR &lt; 2<sup>−128</sup>. This is low enough for most applications but means BIKE is not suitable for protocols requiring <em>perfect correctness</em> (zero DFR). ML-KEM has DFR &lt; 2<sup>−139</sup> which is essentially negligible.</p>
+        <p class="note"><strong>Decapsulation Failure Rate (DFR):</strong> BIKE has a non-zero DFR — the decoder may fail for some error patterns, so BIKE is not suitable for protocols requiring <em>perfect correctness</em>. Two different numbers, and they are not interchangeable:</p>
+        <ul class="dfr-claims">
+          <li><strong>Spec BIKE Level 1</strong> (r = <span data-param="spec-r"></span>, t = <span data-param="spec-t"></span>): DFR &lt; 2<sup>−128</sup>, by design — an event nobody will ever observe. ML-KEM's &lt; 2<sup>−139</sup> is comparably negligible.</li>
+          <li><strong>This page</strong> (r = <span data-param="sim-r"></span>, t = <span data-param="sim-t"></span>): the reduced parameters are far weaker, and the measured rate is roughly <strong>0.5%</strong> — about 2<sup>−7.6</sup>, or 1 decode in 200. That is not a flaw in the decoder; it is what shrinking r by a factor of 21 costs you. Do not read the 2<sup>−128</sup> figure onto anything that runs in this tab.</li>
+        </ul>
+        <p class="note">The rate quoted above is not a constant typed into the page — measure it yourself in the <strong>DFR lab</strong> below, and push the error weight up to watch it climb.</p>
       </div>
 
       <div class="card">
@@ -436,6 +414,14 @@
           <p>⚠ Generate a keypair in <button class="link-btn" data-next="panel-2" aria-label="Go to Panel 2 to generate keypair">Panel 2</button> first.</p>
         </div>
         <div id="encap-controls" class="encap-section" style="display:none;">
+          <div class="tamper-control">
+            <label for="encap-weight">
+              Error vector weight <strong>t = <span id="encap-weight-val"><span data-param="sim-t"></span></span></strong>
+            </label>
+            <input type="range" id="encap-weight" class="dfr-slider" min="1" max="40" step="1" aria-describedby="encap-weight-help" />
+            <p id="encap-weight-help" class="help-text">These parameters are provisioned for t = <span data-param="sim-t"></span>. Drag right to plant more errors than the decoder can correct and watch it fail; drag left and it converges in one iteration.</p>
+            <p id="encap-weight-warn" class="tamper-warn" role="status" hidden></p>
+          </div>
           <button id="encap-btn" class="btn btn-primary btn-large" aria-label="Encapsulate: generate shared secret and ciphertext">Encapsulate (Alice)</button>
           <div id="encap-output" class="output-area" aria-live="polite" role="status"></div>
 
@@ -444,12 +430,19 @@
 
           <div id="decoder-viz-wrap" class="decoder-viz-wrap" hidden>
             <h4 class="subhead">Watch the Black-Gray-Flip decoder run</h4>
-            <p class="dv-intro">Decapsulation computes the syndrome and then flips bits to drive it to zero. Step or play through the real iterations below: bits whose unsatisfied-check counter reaches the threshold T are <strong>Black</strong> and get flipped; bits one short are <strong>Gray</strong>. Watch the syndrome weight fall toward zero — or, on a rare failure, stall.</p>
+            <p class="dv-intro">Decapsulation computes the syndrome and then flips bits to drive it to zero. Step or play through the real iterations below: bits whose unsatisfied-check counter reaches the threshold T are <strong>Black</strong> and get flipped; bits within τ of T are <strong>Gray</strong> and held back. The first iteration then runs the two masked correction passes — un-flipping Black bits that still look wrong, and flipping the Gray bits that have since crossed the majority threshold. Watch the syndrome weight fall toward zero — or, past the decoder's capability, stall.</p>
             <div id="decoder-viz" aria-label="Black-Gray-Flip decoder step-by-step visualization"></div>
           </div>
 
           <div id="kem-match" class="match-indicator" aria-live="assertive" role="status" style="display:none;"></div>
         </div>
+      </div>
+
+      <div class="card">
+        <h3>DFR Lab: Break the Decoder</h3>
+        <p>A decapsulation failure rate is normally a number you are asked to believe. Here it is a number you can produce. Each trial below plants a fresh random error of the weight you choose, forms the real syndrome, runs the real BGF decoder, and checks that it recovered <em>exactly</em> the planted error — a zero syndrome reached with a different error vector still means Alice and Bob derive different secrets, so it counts as a failure. A fresh keypair is drawn every 50 trials, so the result averages over keys instead of reporting one lucky key.</p>
+        <p class="note">Watch for the <strong>waterfall</strong>: the rate sits near zero while t is inside what the code can correct, turns sharply over a narrow band, and pins at 100%. That knee — not the headline constant — is the shape of every code-based KEM's correctness argument. It is also why choosing r and t is the whole security-versus-correctness tradeoff in BIKE.</p>
+        <div id="dfr-lab" aria-label="Error weight versus measured decoding failure rate"></div>
       </div>
 
       <div class="card">
@@ -525,7 +518,7 @@
                 <td class="vs-cell">vs</td><td>Module-LWE</td>
               </tr>
               <tr>
-                <th scope="row">Decap Failure Rate</th>
+                <th scope="row">Decap Failure Rate <span class="table-fn">(spec)</span></th>
                 <td>&lt; 2<sup>−128</sup></td><td>&lt; 2<sup>−139</sup></td>
                 <td>&lt; 2<sup>−192</sup></td><td>&lt; 2<sup>−164</sup></td>
                 <td>&lt; 2<sup>−256</sup></td><td>&lt; 2<sup>−174</sup></td>
@@ -542,6 +535,7 @@
             </tbody>
           </table>
         </div>
+        <p class="note">Every figure in this table is a <strong>specification</strong> figure at full parameters. The simulation running on this page uses r = <span data-param="sim-r"></span> instead of <span data-param="spec-r"></span>, and its measured decoding-failure rate is around 0.5% — roughly 2<sup>−7.6</sup>, not 2<sup>−128</sup>. The DFR lab in Panel 3 measures it live.</p>
         <p class="cite">Sources: <a href="https://bikesuite.org" target="_blank" rel="noopener">BIKE Spec</a>, <a href="https://pq-crystals.org/kyber/" target="_blank" rel="noopener">CRYSTALS-Kyber / ML-KEM Spec (FIPS 203)</a></p>
       </div>
 
@@ -581,8 +575,8 @@
 
       <div class="card">
         <h3>Cryptographic Diversity</h3>
-        <p>The NIST post-quantum standardization process selected ML-KEM (lattice-based) as the primary KEM standard. But the process also advanced <strong>code-based</strong> and <strong>isogeny-based</strong> alternatives because <em>no single mathematical assumption should be a single point of failure</em>.</p>
-        <p>If a breakthrough attack against lattice problems emerges, code-based schemes like BIKE and Classic McEliece would remain secure — and vice versa. This is the <strong>cryptographic diversity argument</strong>.</p>
+        <p>The NIST post-quantum standardization process selected ML-KEM (lattice-based) as the primary KEM standard, then in March 2025 selected the <strong>code-based</strong> HQC as a backup on a different mathematical assumption — precisely because <em>no single assumption should be a single point of failure</em>. The isogeny-based candidate SIKE made the same diversity argument and was broken outright in 2022 by a classical attack, which is a reminder that diversity is a hedge, not a guarantee.</p>
+        <p>If a breakthrough attack against lattice problems emerges, code-based schemes like HQC, BIKE, and Classic McEliece would remain secure — and vice versa. That is the <strong>cryptographic diversity argument</strong>, and it is why the syndrome-decoding problem this page is built on is worth understanding even though BIKE itself did not advance.</p>
       </div>
 
       <div class="card">
@@ -593,9 +587,11 @@
           <li><strong>1986:</strong> Niederreiter dual formulation</li>
           <li><strong>2013:</strong> Misoczki et al. propose MDPC-McEliece — precursor to BIKE</li>
           <li><strong>2017:</strong> BIKE submitted to NIST PQC competition</li>
-          <li><strong>2022:</strong> BIKE advances to NIST Round 4</li>
-          <li><strong>2024–2026:</strong> BIKE under active evaluation for potential standardization</li>
+          <li><strong>2022:</strong> BIKE advances to NIST Round 4 alongside Classic McEliece, HQC, and SIKE</li>
+          <li><strong>2025 (March):</strong> NIST selects <strong>HQC</strong> as the backup KEM to ML-KEM (<a href="https://csrc.nist.gov/pubs/ir/8545/final" target="_blank" rel="noopener">NIST IR 8545</a>). <strong>BIKE was not selected</strong> — NIST cited HQC's clearer security proof and BIKE's reliance on a decoder whose failure rate is argued rather than proven.</li>
+          <li><strong>Today:</strong> BIKE has no NIST standardization path. It remains a studied, implemented design (it ships in Open Quantum Safe's <code>liboqs</code>) and its QC-MDPC decoding problem is still unbroken — but if you need a standards-track code-based KEM, that is HQC, and if you need a KEM at all, the default is ML-KEM.</li>
         </ul>
+        <p class="note">This matters for how you read the rest of this page: BIKE is worth understanding because bit-flipping decoders and the DFR tradeoff are genuinely instructive, not because you should be planning to deploy it.</p>
       </div>
 
       <div class="card">

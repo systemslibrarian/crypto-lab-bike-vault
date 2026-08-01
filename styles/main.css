@@ -1822,3 +1822,295 @@ abbr.term {
    sub-4.5:1 issue as the status chips. Darken to the chip-safe shades. */
 [data-theme="light"] .kv-tag-sparse { color: #036849; }
 [data-theme="light"] .kv-tag-dense { color: #a95d05; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Decoder-viz additions: masked correction passes (Black / Gray)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Bits the Black pass walked back, and Gray bits the Gray pass flipped, need to
+   read as distinct outcomes from a plain Black flip — hue plus an outline so the
+   distinction survives a monochrome or low-vision rendering. */
+.dv-cell.bit-undo {
+  background: var(--error);
+  outline: 1px solid var(--error);
+  outline-offset: -1px;
+}
+.dv-cell.bit-grayflip {
+  background: var(--warning);
+  outline: 1px solid var(--warning);
+  outline-offset: -1px;
+}
+.dv-swatch.bit-undo { background: var(--error); }
+.dv-swatch.bit-grayflip { background: var(--warning); }
+
+.dv-phases {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dv-phase {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.6rem;
+  align-items: baseline;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-code);
+  border-left: 3px solid var(--border);
+}
+
+.dv-phase-down { border-left-color: var(--success); }
+.dv-phase-up { border-left-color: var(--error); }
+.dv-phase-flat { border-left-color: var(--border); }
+
+.dv-phase-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.dv-phase-detail { grid-column: 2; }
+
+.dv-phase-weight {
+  grid-column: 1 / -1;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.78rem;
+}
+
+.dv-phase-delta { font-weight: 700; }
+.dv-phase-down .dv-phase-delta { color: var(--success); }
+.dv-phase-up .dv-phase-delta { color: var(--error); }
+
+.dv-phase-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Key-size bars: logarithmic axis
+   ═══════════════════════════════════════════════════════════════════ */
+
+.size-axis {
+  position: relative;
+  height: 1.3rem;
+  margin-top: 0.15rem;
+  border-top: 1px solid var(--border);
+}
+
+.size-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 0.35rem;
+  background: var(--border);
+}
+
+.size-tick-label {
+  position: absolute;
+  top: 0.4rem;
+  left: 0;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.size-axis-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0.5rem 0 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tamper control + DFR lab
+   ═══════════════════════════════════════════════════════════════════ */
+
+.tamper-control {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  background: var(--bg-secondary);
+}
+
+.tamper-control > label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.tamper-warn {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.6rem;
+  line-height: 1.45;
+}
+
+.dfr-slider {
+  width: 100%;
+  max-width: 32rem;
+  /* Native range inputs are ~20px tall; pad the hit area to the 24px minimum. */
+  min-height: 24px;
+  accent-color: var(--accent);
+}
+
+.dfr-lab { display: grid; gap: 0.9rem; }
+
+.dfr-controls {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem;
+  background: var(--bg-secondary);
+}
+
+.dfr-slider-label { display: block; font-size: 0.95rem; margin-bottom: 0.4rem; }
+.dfr-slider-hint { color: var(--text-secondary); font-size: 0.82rem; font-weight: 400; }
+
+.dfr-slider-help {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.dfr-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.dfr-progress { display: grid; gap: 0.3rem; }
+
+.dfr-progress-track {
+  height: 0.7rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dfr-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s linear;
+}
+
+.dfr-progress-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.dfr-live {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.dfr-live:empty { display: none; }
+
+.dfr-empty { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+
+.dfr-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.5rem;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.dfr-col {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: center;
+  min-width: 2.1rem;
+}
+
+.dfr-col-track {
+  display: flex;
+  align-items: flex-end;
+  width: 1.5rem;
+  height: 7rem;
+  background: var(--bg-input);
+  border-radius: 2px;
+}
+
+.dfr-bar {
+  display: block;
+  width: 100%;
+  background: var(--error);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.3s ease;
+}
+
+/* Weights the parameter set is actually provisioned for read as "expected",
+   not "broken" — different hue so the waterfall's two regimes are legible. */
+.dfr-bar-inspec { background: var(--success); }
+
+.dfr-bar-current { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.dfr-col-pct,
+.dfr-col-w {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.dfr-col-w { font-weight: 700; color: var(--text-primary); }
+
+.dfr-chart-axis {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.dfr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.dfr-table caption {
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding-bottom: 0.35rem;
+}
+
+.dfr-table th,
+.dfr-table td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.dfr-table th { font-weight: 600; white-space: nowrap; }
+.dfr-table td { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; }
+.dfr-row-current { background: var(--accent-subtle); }
+
+.dfr-claims {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.2rem;
+}
+
+.dfr-claims li { margin-bottom: 0.4rem; }
+
+.table-fn { font-weight: 400; font-size: 0.75rem; color: var(--text-secondary); }

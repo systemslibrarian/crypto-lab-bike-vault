@@ -11,7 +11,13 @@
  * of r = 12,323 so a human can watch it.
  */
 
-const N = 12; // small block size for the on-screen demo (real BIKE: r = 12,323)
+import { BIKE_PARAMS } from './bike';
+
+const N = 12; // small block size for the on-screen demo (spec BIKE Level 1: r = 12,323)
+
+// Spec BIKE Level 1 figures for the caption, read from the parameter table rather
+// than typed into the prose.
+const SPEC = BIKE_PARAMS[1];
 
 /** Build the n×n circulant matrix whose first row is `firstRow`.
  *  Row i is the first row shifted right (cyclically) by i positions. */
@@ -78,7 +84,7 @@ export function renderCirculantDemo(container: HTMLElement): void {
       ${renderFirstRowEditor(firstRow)}
       <p class="circ-meta">First-row weight: <strong>${weight}</strong> of ${N} &nbsp;·&nbsp; the block is fully determined by these ${N} bits</p>
       ${renderMatrix(firstRow)}
-      <p class="circ-caption">In BIKE Level 1 this same structure holds at <strong>r = 12,323</strong>: each circulant block H₀, H₁ is one sparse row of weight w/2 = 71, cyclically shifted — which is why the public key is compact.</p>
+      <p class="circ-caption">In spec BIKE Level 1 this same structure holds at <strong>r = ${SPEC.r.toLocaleString()}</strong>: each circulant block H₀, H₁ is one sparse row of weight w/2 = ${SPEC.w / 2}, cyclically shifted — which is why the public key is compact.</p>
     `;
     shell.querySelector('.circ-editor')!.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLElement>('.circ-bit');

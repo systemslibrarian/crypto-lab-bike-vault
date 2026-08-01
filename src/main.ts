@@ -1,23 +1,57 @@
 /**
  * main.ts — Entry point for BIKE Vault demo
  */
-import { bikeKeyGen, bikeEncap, bikeDecap, aesEncryptDecrypt, toHex, SIM_R, SIM_W, SIM_T, type BikeKeyPair, type EncapResult } from './bike';
+import {
+  bikeKeyGen, bikeEncap, bikeDecap, aesEncryptDecrypt, toHex,
+  SIM_R, SIM_W, SIM_T, SIM_HALF_W, BIKE_PARAMS, BGF_ITERATIONS,
+  type BikeKeyPair, type EncapResult,
+} from './bike';
 import { parityDemo, renderParityOutput } from './qcmdpc';
-import { renderCompareChart } from './compare';
+import { renderCompareChart, renderKeySizeBars } from './compare';
 import { renderCirculantDemo } from './circulant';
 import { renderKeyViz } from './keyviz';
 import { renderDecoderViz } from './decoderviz';
+import { renderDfrLab, MAX_ERROR_WEIGHT } from './dfrlab';
 import { initPanels, initTheme } from './ui';
 
 // --- State ---
 let currentKeyPair: BikeKeyPair | null = null;
 let currentEncap: EncapResult | null = null;
+let currentErrorWeight = SIM_T;
 let sharedSecretForAes: Uint8Array | null = null;
 let stopDecoderViz: (() => void) | null = null;
 
 // --- Helpers ---
 function $(id: string): HTMLElement {
   return document.getElementById(id)!;
+}
+
+/**
+ * Every parameter number that appears in the page prose is filled in from the
+ * constants at runtime via `data-param`, so a value can never be typed into the
+ * copy and then drift away from what the code actually runs. `sim-*` are the
+ * reduced simulation parameters; `spec-*` are published BIKE Level 1 figures.
+ */
+const PARAM_STRINGS: Record<string, string> = {
+  'sim-r': SIM_R.toLocaleString(),
+  'sim-w': String(SIM_W),
+  'sim-t': String(SIM_T),
+  'sim-half-w': String(SIM_HALF_W),
+  'sim-iters': String(BGF_ITERATIONS),
+  'sim-max-t': String(MAX_ERROR_WEIGHT),
+  'spec-r': BIKE_PARAMS[1].r.toLocaleString(),
+  'spec-w': String(BIKE_PARAMS[1].w),
+  'spec-t': String(BIKE_PARAMS[1].t),
+  'spec-half-w': String(BIKE_PARAMS[1].w / 2),
+  'spec-pk-bytes': BIKE_PARAMS[1].pk_bytes.toLocaleString(),
+  'spec-ct-bytes': BIKE_PARAMS[1].ct_bytes.toLocaleString(),
+};
+
+function fillParamStrings(root: ParentNode = document): void {
+  root.querySelectorAll<HTMLElement>('[data-param]').forEach((el) => {
+    const key = el.dataset.param;
+    if (key && key in PARAM_STRINGS) el.textContent = PARAM_STRINGS[key];
+  });
 }
 
 function escapeHtml(str: string): string {
@@ -62,7 +96,7 @@ function initKeyGen(): void {
   btn.addEventListener('click', async () => {
     btn.disabled = true;
     btn.textContent = 'Generating…';
-    output.innerHTML = '<p class="loading-text">Generating BIKE Level 1 keypair (simulation: r=' + SIM_R + ', w=' + SIM_W + ', t=' + SIM_T + ')…</p>';
+    output.innerHTML = `<p class="loading-text">Generating keypair at the simulation parameters (r=${SIM_R}, w=${SIM_W}, t=${SIM_T})…</p>`;
 
     try {
       const kp = await bikeKeyGen();
@@ -83,7 +117,7 @@ function initKeyGen(): void {
 
           <h4>Public Key h = h₀⁻¹ · h₁</h4>
           <p class="mono output-scroll" aria-label="Public key hex">${truncHex(toHex(kp.publicKey), 80)}</p>
-          <p class="meta">Size: ${kp.publicKey.length} bytes (simulation) | Real BIKE Level 1: 1,541 bytes</p>
+          <p class="meta">Size: ${kp.publicKey.length} bytes (simulation) | Spec BIKE Level 1: ${BIKE_PARAMS[1].pk_bytes.toLocaleString()} bytes</p>
           <p class="meta">Non-zero positions: ${kp.hPositions.length} of ${SIM_R}</p>
 
           <p class="meta timing">⏱ Generated in ${kp.timingMs.toFixed(1)} ms</p>
@@ -100,6 +134,7 @@ function initKeyGen(): void {
         h1Positions: kp.h1Positions,
         hPositions: kp.hPositions,
         r: SIM_R,
+        specHalfWeight: BIKE_PARAMS[1].w / 2,
       });
 
       // Enable encap panel
@@ -134,6 +169,27 @@ function initEncapDecap(): void {
   const decapOutput = $('decap-output');
   const matchDiv = $('kem-match');
 
+  // Tamper control: plant more errors than the code is provisioned to correct.
+  const tamper = document.getElementById('encap-weight') as HTMLInputElement | null;
+  const tamperVal = document.getElementById('encap-weight-val');
+  const tamperWarn = document.getElementById('encap-weight-warn');
+  if (tamper) {
+    tamper.min = '1';
+    tamper.max = String(MAX_ERROR_WEIGHT);
+    tamper.value = String(SIM_T);
+    const syncTamper = () => {
+      currentErrorWeight = Number(tamper.value);
+      if (tamperVal) tamperVal.textContent = String(currentErrorWeight);
+      if (tamperWarn) {
+        tamperWarn.hidden = currentErrorWeight <= SIM_T;
+        tamperWarn.textContent =
+          `t = ${currentErrorWeight} is above the ${SIM_T} these parameters are provisioned for — the decoder is now being asked to correct more errors than it can. Expect failures.`;
+      }
+    };
+    tamper.addEventListener('input', syncTamper);
+    syncTamper();
+  }
+
   encapBtn.addEventListener('click', async () => {
     if (!currentKeyPair) return;
     encapBtn.disabled = true;
@@ -147,7 +203,7 @@ function initEncapDecap(): void {
     $('decoder-viz').innerHTML = '';
 
     try {
-      const result = await bikeEncap(currentKeyPair.publicKey);
+      const result = await bikeEncap(currentKeyPair.publicKey, currentErrorWeight);
       currentEncap = result;
 
       encapOutput.innerHTML = `
@@ -166,8 +222,12 @@ function initEncapDecap(): void {
           <h4>Alice's Shared Secret K</h4>
           <p class="mono output-scroll shared-secret" aria-label="Alice's shared secret hex">${toHex(result.sharedSecret)}</p>
 
-          <p class="meta">Error vector weight: ${result.errorPositions.length} (target: ${SIM_T})</p>
-          <p class="meta">Total ciphertext: ${result.ciphertext.length} bytes (simulation) | Real BIKE Level 1: 1,573 bytes</p>
+          <p class="meta">Error vector weight: ${result.errorPositions.length}${
+            result.errorPositions.length === SIM_T
+              ? ` (the parameter set's t = ${SIM_T})`
+              : ` — <strong>tampered</strong>, the parameter set's t is ${SIM_T}`
+          }</p>
+          <p class="meta">Total ciphertext: ${result.ciphertext.length} bytes (simulation) | Spec BIKE Level 1: ${BIKE_PARAMS[1].ct_bytes.toLocaleString()} bytes</p>
           <p class="meta timing">⏱ Encapsulated in ${result.timingMs.toFixed(1)} ms</p>
         </div>
       `;
@@ -204,6 +264,7 @@ function initEncapDecap(): void {
         initialSyndromeWeight: result.initialSyndromeWeight,
         trace: result.trace,
         success: result.success,
+        errorWeight: currentEncap.errorPositions.length,
       });
 
       const aliceHex = toHex(currentEncap.sharedSecret);
@@ -233,10 +294,15 @@ function initEncapDecap(): void {
         sharedSecretForAes = result.sharedSecret;
         showAesSection();
       } else {
+        const tampered = currentEncap.errorPositions.length > SIM_T;
         matchDiv.innerHTML = `
           <div class="match-failure" role="alert">
             <span class="match-icon" aria-hidden="true">❌</span>
-            <span><strong>Shared secrets do NOT match.</strong> This demonstrates BIKE's non-zero decapsulation failure rate. Try again — failures are rare but possible.</span>
+            <span><strong>Shared secrets do NOT match.</strong> ${
+              tampered
+                ? `The error weight was pushed to ${currentEncap.errorPositions.length}, past what these parameters can correct — this is the decoding-failure regime, on purpose.`
+                : `A decoding failure at the parameter set's own t = ${SIM_T}. At these reduced simulation parameters that happens for roughly 0.5% of error patterns; spec BIKE Level 1 targets below 2<sup>−128</sup>.`
+            } Measure the rate yourself in the DFR lab below.</span>
           </div>
         `;
       }
@@ -322,14 +388,29 @@ function initCompare(): void {
   }
 }
 
+// --- Panel 2: Key size bars (log axis, computed from the byte counts) ---
+function initKeySizes(): void {
+  const container = document.getElementById('key-size-bars');
+  if (container) renderKeySizeBars(container);
+}
+
+// --- Panel 3: Error weight vs measured DFR ---
+function initDfrLab(): void {
+  const container = document.getElementById('dfr-lab');
+  if (container) renderDfrLab(container);
+}
+
 // --- Init ---
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initPanels();
+  fillParamStrings();
   initParityDemo();
   initCirculant();
   initKeyGen();
+  initKeySizes();
   initEncapDecap();
+  initDfrLab();
   initAes();
   initCompare();
 });
