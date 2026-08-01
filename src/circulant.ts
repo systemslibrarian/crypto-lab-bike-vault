@@ -78,7 +78,7 @@ export function renderCirculantDemo(container: HTMLElement): void {
       ${renderFirstRowEditor(firstRow)}
       <p class="circ-meta">First-row weight: <strong>${weight}</strong> of ${N} &nbsp;·&nbsp; the block is fully determined by these ${N} bits</p>
       ${renderMatrix(firstRow)}
-      <p class="circ-caption">In BIKE-1 this same structure holds at <strong>r = 12,323</strong>: each circulant block H₀, H₁ is one sparse row of weight w/2 = 71, cyclically shifted — which is why the public key is compact.</p>
+      <p class="circ-caption">In BIKE Level 1 this same structure holds at <strong>r = 12,323</strong>: each circulant block H₀, H₁ is one sparse row of weight w/2 = 71, cyclically shifted — which is why the public key is compact.</p>
     `;
     shell.querySelector('.circ-editor')!.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLElement>('.circ-bit');

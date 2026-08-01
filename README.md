@@ -18,7 +18,7 @@ Rather than describe BIKE's signature mechanisms in prose alone, the demo lets y
 
 **[systemslibrarian.github.io/crypto-lab-bike-vault](https://systemslibrarian.github.io/crypto-lab-bike-vault/)**
 
-The demo lets you move through BIKE primer material, run key generation, perform encapsulation/decapsulation, and test message encryption with AES-256-GCM. You can use controls including Generate Keypair, Encapsulate (Alice), Decapsulate (Bob), panel navigation tabs, and the message input for encryption. Along the way you can toggle bits in the live circulant block, inspect the sparse-vs-dense key trapdoor, and step or play through the Black-Gray-Flip decoder one iteration at a time. A collapsible terms strip and a deferred "Go deeper" hardness card keep the on-ramp gentle for newcomers while preserving the depth for specialists. Parameter values are shown in the interface (for example BIKE-1 values and simulation parameters) so users can inspect how settings affect displayed outputs.
+The demo lets you move through BIKE primer material, run key generation, perform encapsulation/decapsulation, and test message encryption with AES-256-GCM. You can use controls including Generate Keypair, Encapsulate (Alice), Decapsulate (Bob), panel navigation tabs, and the message input for encryption. Along the way you can toggle bits in the live circulant block, inspect the sparse-vs-dense key trapdoor, and step or play through the Black-Gray-Flip decoder one iteration at a time. A collapsible terms strip and a deferred "Go deeper" hardness card keep the on-ramp gentle for newcomers while preserving the depth for specialists. Parameter values are shown in the interface (for example BIKE Level 1 values and simulation parameters) so users can inspect how settings affect displayed outputs.
 
 ## What Can Go Wrong
 
@@ -55,5 +55,7 @@ No environment variables are required.
 - [crypto-lab-syndrome-drain](https://systemslibrarian.github.io/crypto-lab-syndrome-drain/) — decoding-failure / DOOM attacks against BIKE, HQC, and McEliece.
 
 ---
+
+*One of 170+ browser demos in the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*

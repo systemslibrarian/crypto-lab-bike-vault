@@ -18,11 +18,11 @@ export interface KemEntry {
 }
 
 export const COMPARISON_DATA: KemEntry[] = [
-  { name: 'BIKE-1',       level: 1, pkBytes: 1541,  ctBytes: 1573,  ssBytes: 32, assumption: 'QC-MDPC Decoding', nistStatus: 'Round 4 Alternate',   family: 'bike' },
+  { name: 'BIKE Level 1',       level: 1, pkBytes: 1541,  ctBytes: 1573,  ssBytes: 32, assumption: 'QC-MDPC Decoding', nistStatus: 'Round 4 Candidate',   family: 'bike' },
   { name: 'ML-KEM-512',   level: 1, pkBytes: 800,   ctBytes: 768,   ssBytes: 32, assumption: 'Module-LWE',       nistStatus: 'FIPS 203 Standard',    family: 'mlkem' },
-  { name: 'BIKE-3',       level: 3, pkBytes: 3083,  ctBytes: 3115,  ssBytes: 32, assumption: 'QC-MDPC Decoding', nistStatus: 'Round 4 Alternate',   family: 'bike' },
+  { name: 'BIKE Level 3',       level: 3, pkBytes: 3083,  ctBytes: 3115,  ssBytes: 32, assumption: 'QC-MDPC Decoding', nistStatus: 'Round 4 Candidate',   family: 'bike' },
   { name: 'ML-KEM-768',   level: 3, pkBytes: 1184,  ctBytes: 1088,  ssBytes: 32, assumption: 'Module-LWE',       nistStatus: 'FIPS 203 Standard',    family: 'mlkem' },
-  { name: 'BIKE-5',       level: 5, pkBytes: 5122,  ctBytes: 5154,  ssBytes: 32, assumption: 'QC-MDPC Decoding', nistStatus: 'Round 4 Alternate',   family: 'bike' },
+  { name: 'BIKE Level 5',       level: 5, pkBytes: 5122,  ctBytes: 5154,  ssBytes: 32, assumption: 'QC-MDPC Decoding', nistStatus: 'Round 4 Candidate',   family: 'bike' },
   { name: 'ML-KEM-1024',  level: 5, pkBytes: 1568,  ctBytes: 1568,  ssBytes: 32, assumption: 'Module-LWE',       nistStatus: 'FIPS 203 Standard',    family: 'mlkem' },
 ];
 

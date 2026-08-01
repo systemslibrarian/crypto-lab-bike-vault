@@ -62,7 +62,7 @@ function initKeyGen(): void {
   btn.addEventListener('click', async () => {
     btn.disabled = true;
     btn.textContent = 'Generating…';
-    output.innerHTML = '<p class="loading-text">Generating BIKE-1 keypair (simulation: r=' + SIM_R + ', w=' + SIM_W + ', t=' + SIM_T + ')…</p>';
+    output.innerHTML = '<p class="loading-text">Generating BIKE Level 1 keypair (simulation: r=' + SIM_R + ', w=' + SIM_W + ', t=' + SIM_T + ')…</p>';
 
     try {
       const kp = await bikeKeyGen();
@@ -83,7 +83,7 @@ function initKeyGen(): void {
 
           <h4>Public Key h = h₀⁻¹ · h₁</h4>
           <p class="mono output-scroll" aria-label="Public key hex">${truncHex(toHex(kp.publicKey), 80)}</p>
-          <p class="meta">Size: ${kp.publicKey.length} bytes (simulation) | Real BIKE-1: 1,541 bytes</p>
+          <p class="meta">Size: ${kp.publicKey.length} bytes (simulation) | Real BIKE Level 1: 1,541 bytes</p>
           <p class="meta">Non-zero positions: ${kp.hPositions.length} of ${SIM_R}</p>
 
           <p class="meta timing">⏱ Generated in ${kp.timingMs.toFixed(1)} ms</p>
@@ -167,7 +167,7 @@ function initEncapDecap(): void {
           <p class="mono output-scroll shared-secret" aria-label="Alice's shared secret hex">${toHex(result.sharedSecret)}</p>
 
           <p class="meta">Error vector weight: ${result.errorPositions.length} (target: ${SIM_T})</p>
-          <p class="meta">Total ciphertext: ${result.ciphertext.length} bytes (simulation) | Real BIKE-1: 1,573 bytes</p>
+          <p class="meta">Total ciphertext: ${result.ciphertext.length} bytes (simulation) | Real BIKE Level 1: 1,573 bytes</p>
           <p class="meta timing">⏱ Encapsulated in ${result.timingMs.toFixed(1)} ms</p>
         </div>
       `;

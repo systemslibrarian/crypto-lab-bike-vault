@@ -235,7 +235,7 @@
             </div>
             <div class="matrix-bracket" aria-hidden="true">]</div>
           </div>
-          <p class="visual-caption"><strong>BIKE-1 (Level 1):</strong> r = 12,323 — each circulant block defined by a row of weight w/2 = 71</p>
+          <p class="visual-caption"><strong>BIKE Level 1:</strong> r = 12,323 — each circulant block defined by a row of weight w/2 = 71</p>
         </div>
 
         <h4 class="subhead">See it: one row builds a whole block</h4>
@@ -270,7 +270,7 @@
           <span class="status-chip status-round4" aria-label="NIST Status: Round 4 Alternate Candidate">NIST Round 4 Alternate</span>
           <span class="status-chip status-sim" aria-label="Simulation status: Illustrative, not production BIKE">⚠ Illustrative — not production BIKE</span>
         </div>
-        <p>BIKE key generation produces a keypair using QC-MDPC code structure. We use <strong>BIKE-1 (Level 1)</strong> parameters for speed in the browser.</p>
+        <p>BIKE key generation produces a keypair using QC-MDPC code structure. We use <strong>BIKE Level 1</strong> parameters for speed in the browser.</p>
         <div class="param-table-wrapper">
           <table class="param-table" aria-label="BIKE parameter sets from NIST Round 4 submission">
             <caption>BIKE Parameter Sets (NIST Round 4 Submission Spec)</caption>
@@ -285,21 +285,21 @@
             </thead>
             <tbody>
               <tr class="highlight-row">
-                <td><strong>BIKE-1</strong></td>
+                <td><strong>BIKE Level 1</strong></td>
                 <td>Level 1</td>
                 <td>12,323</td>
                 <td>142</td>
                 <td>134</td>
               </tr>
               <tr>
-                <td>BIKE-3</td>
+                <td>BIKE Level 3</td>
                 <td>Level 3</td>
                 <td>24,659</td>
                 <td>206</td>
                 <td>199</td>
               </tr>
               <tr>
-                <td>BIKE-5</td>
+                <td>BIKE Level 5</td>
                 <td>Level 5</td>
                 <td>40,973</td>
                 <td>274</td>
@@ -312,10 +312,10 @@
       </div>
 
       <div class="card">
-        <h3>Generate BIKE-1 Keypair</h3>
-        <button id="keygen-btn" class="btn btn-primary btn-large" aria-label="Generate BIKE-1 key pair">Generate Keypair</button>
+        <h3>Generate BIKE Level 1 Keypair</h3>
+        <button id="keygen-btn" class="btn btn-primary btn-large" aria-label="Generate BIKE Level 1 key pair">Generate Keypair</button>
         <div id="keygen-output" class="output-area" aria-live="polite" role="status">
-          <p class="placeholder-text">Press "Generate Keypair" to create a BIKE-1 key pair.</p>
+          <p class="placeholder-text">Press "Generate Keypair" to create a BIKE Level 1 key pair.</p>
         </div>
       </div>
 
@@ -345,7 +345,7 @@
         <h3>Key Size Comparison</h3>
         <div class="size-comparison" aria-label="Key size comparison between BIKE, ML-KEM, and RSA">
           <div class="size-bar-group">
-            <div class="size-bar-label">BIKE-1 Public Key</div>
+            <div class="size-bar-label">BIKE Level 1 Public Key</div>
             <div class="size-bar" style="--bar-pct: 25%;" aria-label="1,541 bytes">
               <span class="size-bar-fill bike-fill"></span>
               <span class="size-value">1,541 B</span>
@@ -408,7 +408,7 @@
           <li><strong>Subsequent iterations:</strong> Flip both Black and Gray bits, recompute syndrome, repeat.</li>
           <li><strong>Convergence:</strong> When syndrome reaches zero, the error vector is recovered.</li>
         </ol>
-        <p class="note"><strong>Decapsulation Failure Rate (DFR):</strong> BIKE has a non-zero DFR — the decoder may fail to converge for some error patterns. For BIKE-1 (Level 1), DFR &lt; 2<sup>−128</sup>. This is low enough for most applications but means BIKE is not suitable for protocols requiring <em>perfect correctness</em> (zero DFR). ML-KEM has DFR &lt; 2<sup>−139</sup> which is essentially negligible.</p>
+        <p class="note"><strong>Decapsulation Failure Rate (DFR):</strong> BIKE has a non-zero DFR — the decoder may fail to converge for some error patterns. For BIKE Level 1, DFR &lt; 2<sup>−128</sup>. This is low enough for most applications but means BIKE is not suitable for protocols requiring <em>perfect correctness</em> (zero DFR). ML-KEM has DFR &lt; 2<sup>−139</sup> which is essentially negligible.</p>
       </div>
 
       <div class="card">
@@ -468,11 +468,11 @@
             <thead>
               <tr>
                 <th scope="col">Property</th>
-                <th scope="col">BIKE-1</th>
+                <th scope="col">BIKE Level 1</th>
                 <th scope="col">ML-KEM-512</th>
-                <th scope="col">BIKE-3</th>
+                <th scope="col">BIKE Level 3</th>
                 <th scope="col">ML-KEM-768</th>
-                <th scope="col">BIKE-5</th>
+                <th scope="col">BIKE Level 5</th>
                 <th scope="col">ML-KEM-1024</th>
               </tr>
             </thead>

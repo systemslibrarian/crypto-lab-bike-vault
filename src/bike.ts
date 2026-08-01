@@ -3,12 +3,12 @@
  *
  * ⚠ ILLUSTRATIVE — NOT PRODUCTION BIKE ⚠
  *
- * This module implements a structurally accurate simulation of BIKE-1 (Level 1)
+ * This module implements a structurally accurate simulation of BIKE Level 1
  * key generation, encapsulation, and decapsulation using real polynomial arithmetic
  * over F₂[x]/(x^r − 1). It uses REDUCED parameters for browser performance while
  * preserving the correct algorithmic structure.
  *
- * Real BIKE-1 parameters (NIST Round 4):
+ * Real BIKE Level 1 parameters (NIST Round 4):
  *   r = 12323, w = 142, t = 134
  *
  * Simulation parameters (structurally identical, smaller):
@@ -236,7 +236,7 @@ async function sha256(data: Uint8Array): Promise<Uint8Array> {
 
 // --- BIKE Operations ---
 
-/** BIKE-1 Key Generation (simulation parameters) */
+/** BIKE Level 1 Key Generation (simulation parameters) */
 export async function bikeKeyGen(): Promise<BikeKeyPair> {
   const t0 = performance.now();
 
@@ -267,7 +267,7 @@ export async function bikeKeyGen(): Promise<BikeKeyPair> {
   };
 }
 
-/** BIKE-1 Encapsulation */
+/** BIKE Level 1 Encapsulation */
 export async function bikeEncap(publicKey: Uint8Array): Promise<EncapResult> {
   const t0 = performance.now();
 
@@ -336,7 +336,7 @@ function weight(p: Uint8Array): number {
  *   T = max( ⌊ threshold_coeff0 + threshold_coeff1 · S ⌋ , (d+1)/2 )
  *
  * where d = w/2 is the column weight of each circulant block. The reference
- * BIKE-1 coefficients are tuned for r = 12323 (0.0069722 · S + 13.530). For
+ * BIKE Level 1 coefficients are tuned for r = 12323 (0.0069722 · S + 13.530). For
  * the reduced simulation parameters we re-derive coefficients from the same
  * linear model so the threshold tracks syndrome weight the way real BIKE does,
  * rather than the previous ad-hoc `maxCnt · 0.75 / 0.55` heuristic.
@@ -478,7 +478,7 @@ export function bgfDecode(
   return { e0, e1, iterations, success: isZero() };
 }
 
-/** BIKE-1 Decapsulation */
+/** BIKE Level 1 Decapsulation */
 export async function bikeDecap(
   ciphertext: Uint8Array,
   privateH0: Uint8Array,
