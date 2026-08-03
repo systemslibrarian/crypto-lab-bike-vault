@@ -12,7 +12,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'list' : [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: 'http://localhost:4220/crypto-lab-bike-vault/',
+    baseURL: 'http://localhost:4605/crypto-lab-bike-vault/',
     // The page derives its initial theme from a saved preference; pin the
     // OS scheme to dark so the default scan is genuinely dark and the toggle
     // deterministically moves to light.
@@ -22,8 +22,8 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'npm run preview -- --port 4220 --strictPort',
-    url: 'http://localhost:4220/crypto-lab-bike-vault/',
+    command: 'npm run preview -- --port 4605 --strictPort',
+    url: 'http://localhost:4605/crypto-lab-bike-vault/',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },
