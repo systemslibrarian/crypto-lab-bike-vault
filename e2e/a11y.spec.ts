@@ -10,6 +10,25 @@ import { expect, test, type Page } from '@playwright/test';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
+/**
+ * Freeze every animation and transition at its settled value, BEFORE any theme
+ * toggling. Tabs, buttons and the toggle itself carry `transition: color /
+ * background / border-color 0.2s`, so scanning straight after a theme flip
+ * samples a mid-transition blend and reports a colour that exists in neither
+ * palette — that produced a phantom `color-contrast` failure on `#tab-1` which
+ * vanished entirely once the page was allowed to settle. Zeroing the durations
+ * makes elements land instantly on the exact colours a user sees when the flip
+ * completes: it changes no computed colour, so it hides no real violation, it
+ * only removes the sampling race.
+ */
+async function freezeMotion(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `*,*::before,*::after{
+      animation-duration:0s!important;animation-delay:0s!important;
+      transition-duration:0s!important;transition-delay:0s!important;}`,
+  });
+}
+
 async function revealAll(page: Page): Promise<void> {
   await page.evaluate(() => {
     // Expand any native disclosure widgets.
@@ -43,12 +62,14 @@ async function scan(page: Page): Promise<void> {
 
 test('no WCAG A/AA violations in dark theme', async ({ page }) => {
   await page.goto('.');
+  await freezeMotion(page);
   await revealAll(page);
   await scan(page);
 });
 
 test('no WCAG A/AA violations in light theme', async ({ page }) => {
   await page.goto('.');
+  await freezeMotion(page);
   await page.locator('#cl-theme-toggle').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await revealAll(page);

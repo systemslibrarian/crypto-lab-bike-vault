@@ -82,10 +82,21 @@
   --on-accent: #ffffff;
   --on-bar: #ffffff;
   --accent-subtle: rgba(37, 99, 235, 0.08);
-  --success: #059669;
-  --success-bg: rgba(5, 150, 105, 0.08);
-  --error: #dc2626;
-  --error-bg: rgba(220, 38, 38, 0.08);
+  /* --success/--error double as text ink (e.g. .dv-phase-delta in the BGF
+     decoder viz) on the plain --bg-input/--bg-code surface #f0f1f5, not only on
+     their own 8% tints, so both must clear 4.5:1 against the LIGHTEST-ink case
+     #f0f1f5 — the previous emerald-600 #059669 measured 3.33:1 there and
+     red-600 #dc2626 measured 4.28:1, both short of AA body text.
+     #047857 (emerald-700): 4.86:1 on #f0f1f5, 5.25:1 on --bg-primary #f8f9fc,
+     5.48:1 on #ffffff.  Was #059669 (3.33 / 3.60 / 3.77:1).
+     #b91c1c (red-700):     5.73:1 on #f0f1f5, 6.19:1 on --bg-primary #f8f9fc,
+     6.47:1 on #ffffff.  Was #dc2626 (4.28 / 4.62 / 4.83:1).
+     Both are only used as fills on non-text swatches/bars (.kv-tone-a,
+     .dv-cell.bit-undo, .dfr-bar), where darkening raises contrast too. */
+  --success: #047857;
+  --success-bg: rgba(4, 120, 87, 0.08);
+  --error: #b91c1c;
+  --error-bg: rgba(185, 28, 28, 0.08);
   --warning: #d97706;
   --warning-bg: rgba(217, 119, 6, 0.08);
   --border: #d4d6e0;

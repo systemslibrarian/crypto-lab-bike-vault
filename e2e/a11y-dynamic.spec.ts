@@ -13,6 +13,26 @@ import { expect, test, type Page } from '@playwright/test';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
+/**
+ * Freeze every animation and transition at its settled value, BEFORE any theme
+ * toggling or flow driving. The decoder viz animates bar width/height (0.3s –
+ * 0.5s) and the tabs/toggle transition colour over 0.2s, so scanning while any
+ * of that is in flight samples a mid-transition blend and reports a colour that
+ * exists in neither palette — that is what produced the phantom `.dv-outcome`
+ * `color-contrast` failure, which vanished once the page was allowed to settle.
+ * Zeroing the durations lands elements instantly on the values a user sees at
+ * rest: it changes no computed colour, so it hides no real violation. Proof
+ * that it does not: `.dv-phase-delta` still failed with this in place, and had
+ * to be fixed in the palette.
+ */
+async function freezeMotion(page: Page): Promise<void> {
+  await page.addStyleTag({
+    content: `*,*::before,*::after{
+      animation-duration:0s!important;animation-delay:0s!important;
+      transition-duration:0s!important;transition-delay:0s!important;}`,
+  });
+}
+
 async function driveFlow(page: Page): Promise<void> {
   // Panel 2 — generate a keypair; the sparse-vs-dense trapdoor viz appears.
   await page.locator('#tab-2').click();
@@ -52,12 +72,14 @@ async function scan(page: Page): Promise<void> {
 
 test('dynamic visualizations: no WCAG A/AA violations in dark theme', async ({ page }) => {
   await page.goto('.');
+  await freezeMotion(page);
   await driveFlow(page);
   await scan(page);
 });
 
 test('dynamic visualizations: no WCAG A/AA violations in light theme', async ({ page }) => {
   await page.goto('.');
+  await freezeMotion(page);
   await page.locator('#cl-theme-toggle').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await driveFlow(page);
