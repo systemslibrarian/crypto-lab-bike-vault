@@ -101,7 +101,7 @@ export function renderParityOutput(result: ParityResult): string {
     bits
       .map((b, i) => {
         const cls = i === highlightIdx ? 'bit-error' : '';
-        return `<span class="bit ${cls}" aria-label="bit ${i}: ${b}">${b}</span>`;
+        return `<span class="bit ${cls}">${b}</span>`;
       })
       .join('');
 

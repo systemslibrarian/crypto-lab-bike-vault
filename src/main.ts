@@ -108,15 +108,15 @@ function initKeyGen(): void {
             <span class="status-chip status-sim">⚠ Illustrative — not production BIKE</span>
           </div>
           <h4>Private Key (h₀ positions)</h4>
-          <p class="mono output-scroll" aria-label="Private key h0 non-zero positions">[${kp.h0Positions.join(', ')}]</p>
+          <p class="mono output-scroll">[${kp.h0Positions.join(', ')}]</p>
           <p class="meta">Weight: ${kp.h0Positions.length} (target: ${SIM_W / 2})</p>
 
           <h4>Private Key (h₁ positions)</h4>
-          <p class="mono output-scroll" aria-label="Private key h1 non-zero positions">[${kp.h1Positions.join(', ')}]</p>
+          <p class="mono output-scroll">[${kp.h1Positions.join(', ')}]</p>
           <p class="meta">Weight: ${kp.h1Positions.length} (target: ${SIM_W / 2})</p>
 
           <h4>Public Key h = h₀⁻¹ · h₁</h4>
-          <p class="mono output-scroll" aria-label="Public key hex">${truncHex(toHex(kp.publicKey), 80)}</p>
+          <p class="mono output-scroll">${truncHex(toHex(kp.publicKey), 80)}</p>
           <p class="meta">Size: ${kp.publicKey.length} bytes (simulation) | Spec BIKE Level 1: ${BIKE_PARAMS[1].pk_bytes.toLocaleString()} bytes</p>
           <p class="meta">Non-zero positions: ${kp.hPositions.length} of ${SIM_R}</p>
 
@@ -209,10 +209,10 @@ function initEncapDecap(): void {
       encapOutput.innerHTML = `
         <div class="output-section">
           <h4>Ciphertext c₀</h4>
-          <p class="mono output-scroll" aria-label="Ciphertext c0 hex">${truncHex(result.c0Hex, 80)}</p>
+          <p class="mono output-scroll">${truncHex(result.c0Hex, 80)}</p>
 
           <h4>Ciphertext c₁ <span class="status-chip status-sim">simulated</span></h4>
-          <p class="mono output-scroll" aria-label="Ciphertext c1 hex">${truncHex(result.c1Hex, 80)}</p>
+          <p class="mono output-scroll">${truncHex(result.c1Hex, 80)}</p>
           <p class="meta note-inline">In real BIKE, c₁ = m ⊕ L(e) binds the message to the error under the
           Fujisaki–Okamoto (IND-CCA) transform, and decapsulation re-encrypts to
           verify it. This demo emits 32 random bytes for c₁ and does <strong>not</strong>
@@ -220,7 +220,7 @@ function initEncapDecap(): void {
           so tampering with c₁ is not detected here.</p>
 
           <h4>Alice's Shared Secret K</h4>
-          <p class="mono output-scroll shared-secret" aria-label="Alice's shared secret hex">${toHex(result.sharedSecret)}</p>
+          <p class="mono output-scroll shared-secret">${toHex(result.sharedSecret)}</p>
 
           <p class="meta">Error vector weight: ${result.errorPositions.length}${
             result.errorPositions.length === SIM_T
@@ -274,7 +274,7 @@ function initEncapDecap(): void {
       decapOutput.innerHTML = `
         <div class="output-section">
           <h4>Bob's Shared Secret K</h4>
-          <p class="mono output-scroll shared-secret" aria-label="Bob's shared secret hex">${bobHex}</p>
+          <p class="mono output-scroll shared-secret">${bobHex}</p>
 
           <p class="meta">BGF decoder iterations: ${result.decoderIterations}</p>
           <p class="meta">Decoder ${result.success ? 'converged ✓' : 'did NOT converge ✗'}</p>
@@ -350,12 +350,12 @@ function initAes(): void {
         <div class="output-section">
           <h4>AES-256-GCM Encryption</h4>
           <p class="meta">IV (nonce):</p>
-          <p class="mono output-scroll" aria-label="AES initialization vector">${result.iv}</p>
+          <p class="mono output-scroll">${result.iv}</p>
           <p class="meta">Ciphertext:</p>
-          <p class="mono output-scroll" aria-label="AES ciphertext hex">${truncHex(result.ciphertext, 120)}</p>
+          <p class="mono output-scroll">${truncHex(result.ciphertext, 120)}</p>
 
           <h4>Decrypted</h4>
-          <p class="decrypted-text" aria-label="Decrypted plaintext">"${escapeHtml(result.plaintext)}"</p>
+          <p class="decrypted-text">"${escapeHtml(result.plaintext)}"</p>
 
           <p class="meta">End-to-end: BIKE KEM → shared secret → AES-256-GCM → plaintext ✓</p>
         </div>

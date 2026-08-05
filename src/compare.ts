@@ -115,7 +115,7 @@ export function renderCompareChart(container: HTMLElement): void {
         <div class="chart-row" role="row">
           <span class="chart-label" role="rowheader">${entry.name}</span>
           <div class="chart-bar-container" role="cell">
-            <div class="chart-bar ${barClass}" style="width:${pct.toFixed(1)}%;" aria-label="${entry.name}: ${total.toLocaleString()} bytes total">
+            <div class="chart-bar ${barClass}" style="width:${pct.toFixed(1)}%;">
               <span class="chart-bar-value">${total.toLocaleString()} B</span>
             </div>
           </div>
@@ -125,7 +125,7 @@ export function renderCompareChart(container: HTMLElement): void {
   }
 
   html += '</div>';
-  html += '<div class="chart-legend" aria-label="Chart legend">';
+  html += '<div class="chart-legend">';
   html += '<span class="legend-item"><span class="legend-swatch bar-bike" aria-hidden="true"></span> BIKE (code-based)</span>';
   html += '<span class="legend-item"><span class="legend-swatch bar-mlkem" aria-hidden="true"></span> ML-KEM (lattice-based)</span>';
   html += '</div>';

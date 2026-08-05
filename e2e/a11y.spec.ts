@@ -1,77 +1,56 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { boot, revealAll, scan, settle } from './gate';
 
 /**
- * WCAG regression gate. Scans the full page in both themes with every
- * collapsible region revealed. This lab uses class-toggled tab panels
- * (.panel + .active, [hidden]) rather than <details>, so we reveal all
- * of them (plus any <details>, just in case) before scanning.
+ * WCAG regression gate — the page's static states.
+ *
+ * Every panel is visited as a real tab activation (not just class-toggled into
+ * view), in both themes, at desktop width and at 380px. The narrow pass is not
+ * decoration: `scrollable-region-focusable` can only fail where something
+ * actually overflows, so a 1280px-only gate can never see it. Both table
+ * wrappers were WCAG 2.1.1 keyboard traps at mobile width, and both topbar
+ * links lost their accessible name entirely below 560px, where
+ * `.cl-btn span{display:none}` leaves nothing but an aria-hidden icon.
+ *
+ * See gate.ts for why nothing is injected into the page before a scan.
  */
 
-const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+const PANELS = [1, 2, 3, 4, 5] as const;
 
-/**
- * Freeze every animation and transition at its settled value, BEFORE any theme
- * toggling. Tabs, buttons and the toggle itself carry `transition: color /
- * background / border-color 0.2s`, so scanning straight after a theme flip
- * samples a mid-transition blend and reports a colour that exists in neither
- * palette — that produced a phantom `color-contrast` failure on `#tab-1` which
- * vanished entirely once the page was allowed to settle. Zeroing the durations
- * makes elements land instantly on the exact colours a user sees when the flip
- * completes: it changes no computed colour, so it hides no real violation, it
- * only removes the sampling race.
- */
-async function freezeMotion(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content: `*,*::before,*::after{
-      animation-duration:0s!important;animation-delay:0s!important;
-      transition-duration:0s!important;transition-delay:0s!important;}`,
+for (const theme of ['dark', 'light'] as const) {
+  test(`no WCAG A/AA violations in ${theme} theme, every panel`, async ({ page }) => {
+    await boot(page, theme);
+
+    for (const n of PANELS) {
+      await page.locator(`#tab-${n}`).click();
+      await expect(page.locator(`#panel-${n}`)).toBeVisible();
+      await expect(page.locator(`#panel-${n} h2`)).toBeVisible();
+      await settle(page);
+      await scan(page, `${theme} / panel ${n}`);
+    }
+
+    // Everything open at once, which is the only way the <details> bodies and
+    // the panels that are not currently selected get looked at together.
+    await revealAll(page);
+    await expect(page.locator('details[open]').first()).toBeVisible();
+    await scan(page, `${theme} / all panels and disclosures open`);
+  });
+
+  test(`no WCAG A/AA violations in ${theme} theme at 380px`, async ({ page }) => {
+    await page.setViewportSize({ width: 380, height: 720 });
+    await boot(page, theme);
+
+    // The tables only overflow their wrappers here, so this is the only place
+    // the wrappers' keyboard reachability can be exercised at all.
+    await page.locator('#tab-2').click();
+    await expect(page.locator('#panel-2')).toBeVisible();
+    const wrapperScrolls = await page
+      .locator('.param-table-wrapper')
+      .evaluate((el) => el.scrollWidth > el.clientWidth);
+    expect(wrapperScrolls, '.param-table-wrapper must actually overflow at 380px').toBe(true);
+    await scan(page, `${theme} / 380px / panel 2`);
+
+    await revealAll(page);
+    await scan(page, `${theme} / 380px / all panels and disclosures open`);
   });
 }
-
-async function revealAll(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    // Expand any native disclosure widgets.
-    for (const details of document.querySelectorAll('details')) {
-      (details as HTMLDetailsElement).open = true;
-    }
-    // The .panel.active reveal animation starts from opacity:0. Neutralize it
-    // so panels are scanned in their settled, fully-opaque state (what a user
-    // sees after the fade completes) rather than mid-transition.
-    const style = document.createElement('style');
-    style.textContent = '.panel, .panel.active { animation: none !important; opacity: 1 !important; }';
-    document.head.appendChild(style);
-    // Reveal all class-toggled tab panels so hidden content is scanned.
-    for (const panel of document.querySelectorAll('.panel')) {
-      panel.classList.add('active');
-      panel.removeAttribute('hidden');
-    }
-  });
-}
-
-async function scan(page: Page): Promise<void> {
-  const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-  const summary = results.violations.map((v) => ({
-    id: v.id,
-    impact: v.impact,
-    help: v.help,
-    nodes: v.nodes.map((n) => n.target.join(' ')).slice(0, 5),
-  }));
-  expect(summary).toEqual([]);
-}
-
-test('no WCAG A/AA violations in dark theme', async ({ page }) => {
-  await page.goto('.');
-  await freezeMotion(page);
-  await revealAll(page);
-  await scan(page);
-});
-
-test('no WCAG A/AA violations in light theme', async ({ page }) => {
-  await page.goto('.');
-  await freezeMotion(page);
-  await page.locator('#cl-theme-toggle').click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await revealAll(page);
-  await scan(page);
-});

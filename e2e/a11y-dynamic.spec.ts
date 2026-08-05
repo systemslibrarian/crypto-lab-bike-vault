@@ -1,87 +1,109 @@
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { boot, revealAll, scan } from './gate';
 
 /**
- * WCAG regression gate for the DYNAMIC teaching visualizations.
+ * WCAG regression gate — the states the page only reaches after you use it.
  *
- * a11y.spec.ts scans the page in its initial state, but the trapdoor key
- * visualization (Panel 2) and the Black-Gray-Flip decoder visualization
- * (Panel 3) are rendered only after the user runs keygen / encap / decap. This
- * spec drives that real flow in both themes and scans the resulting content, so
- * the interactive visuals are held to the same WCAG 2.1 AA bar as static markup.
+ * The state gap is where this lab's real defects were. First paint was clean;
+ * what was never scanned was the tamper warning that only appears once the
+ * error weight is pushed past t (2.93:1 in light theme), and the decrypted
+ * plaintext that only exists after a successful decap plus an AES encrypt
+ * (4.37:1 on its own success tint). Neither is reachable without driving the
+ * flow, so neither had ever been measured.
+ *
+ * Each state below is driven for real — the buttons are clicked, the decoder
+ * genuinely runs — and each scan asserts the content it intends to look at is
+ * on the page before axe sees it.
  */
 
-const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+test.describe.configure({ timeout: 180_000 });
 
-/**
- * Freeze every animation and transition at its settled value, BEFORE any theme
- * toggling or flow driving. The decoder viz animates bar width/height (0.3s –
- * 0.5s) and the tabs/toggle transition colour over 0.2s, so scanning while any
- * of that is in flight samples a mid-transition blend and reports a colour that
- * exists in neither palette — that is what produced the phantom `.dv-outcome`
- * `color-contrast` failure, which vanished once the page was allowed to settle.
- * Zeroing the durations lands elements instantly on the values a user sees at
- * rest: it changes no computed colour, so it hides no real violation. Proof
- * that it does not: `.dv-phase-delta` still failed with this in place, and had
- * to be fixed in the palette.
- */
-async function freezeMotion(page: Page): Promise<void> {
-  await page.addStyleTag({
-    content: `*,*::before,*::after{
-      animation-duration:0s!important;animation-delay:0s!important;
-      transition-duration:0s!important;transition-delay:0s!important;}`,
-  });
-}
-
-async function driveFlow(page: Page): Promise<void> {
-  // Panel 2 — generate a keypair; the sparse-vs-dense trapdoor viz appears.
+/** Panel 2 — generate a keypair; the sparse-vs-dense trapdoor viz appears. */
+async function keygen(page: Page): Promise<void> {
   await page.locator('#tab-2').click();
   await page.locator('#keygen-btn').click();
   await expect(page.locator('#keyviz')).toBeVisible();
+  await expect(page.locator('#keyviz .kv-grid').first()).toBeVisible();
+  await expect(page.locator('#keygen-output .output-section')).toBeVisible();
+}
 
-  // Panel 3 — encapsulate then decapsulate; the BGF decoder viz appears with
-  // at least one real iteration frame (the decoder always runs ≥1 iteration).
+/** Panel 3 — encapsulate then decapsulate at the current error weight. */
+async function encapDecap(page: Page): Promise<void> {
   await page.locator('#tab-3').click();
   await page.locator('#encap-btn').click();
+  await expect(page.locator('#encap-output .output-section')).toBeVisible();
   await expect(page.locator('#decap-btn')).toBeEnabled();
   await page.locator('#decap-btn').click();
   await expect(page.locator('#decoder-viz-wrap')).toBeVisible();
-  await expect(page.locator('.dv-frame')).toBeVisible();
+  // The decoder always runs at least one iteration, so a frame must exist.
+  await expect(page.locator('.dv-frame').first()).toBeVisible();
+  await expect(page.locator('#decap-output .output-section')).toBeVisible();
+  await expect(page.locator('#kem-match')).toBeVisible();
 }
 
-async function scan(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const style = document.createElement('style');
-    style.textContent = '.panel, .panel.active { animation: none !important; opacity: 1 !important; }';
-    document.head.appendChild(style);
-    for (const p of document.querySelectorAll('.panel')) {
-      p.classList.add('active');
-      p.removeAttribute('hidden');
-    }
-    for (const d of document.querySelectorAll('details')) (d as HTMLDetailsElement).open = true;
+for (const theme of ['dark', 'light'] as const) {
+  test(`driven states: no WCAG A/AA violations in ${theme} theme`, async ({ page }) => {
+    await boot(page, theme);
+
+    // --- Panel 1: parity result, then the error branch. ---
+    await page.locator('#tab-1').click();
+    await page.locator('#parity-input').fill('1011');
+    await page.locator('#parity-encode-btn').click();
+    await expect(page.locator('#parity-output .parity-steps')).toBeVisible();
+    await scan(page, `${theme} / parity result`);
+
+    await page.locator('#parity-input').fill('99');
+    await page.locator('#parity-encode-btn').click();
+    await expect(page.locator('#parity-output .error-text')).toBeVisible();
+    await scan(page, `${theme} / parity input error`);
+
+    // --- Panel 2: keygen output plus the trapdoor visualization. ---
+    await keygen(page);
+    await scan(page, `${theme} / keygen result`);
+
+    // --- Panel 3: a successful KEM round trip and its verdict. ---
+    await encapDecap(page);
+    await expect(page.locator('#kem-match .match-success')).toBeVisible();
+    await scan(page, `${theme} / decap success verdict`);
+
+    // --- The AES section only exists once the secrets matched. ---
+    await expect(page.locator('#aes-section')).toBeVisible();
+    await page.locator('#aes-plaintext').fill('hello bike');
+    await page.locator('#aes-encrypt-btn').click();
+    await expect(page.locator('#aes-output .decrypted-text')).toBeVisible();
+    await scan(page, `${theme} / aes end-to-end result`);
+
+    await page.locator('#aes-plaintext').fill('');
+    await page.locator('#aes-encrypt-btn').click();
+    await expect(page.locator('#aes-output .error-text')).toBeVisible();
+    await scan(page, `${theme} / aes empty-input error`);
+
+    // --- The failure regime: push the error weight past what the code can
+    //     correct and scan the decoding-failure verdict and its warning. ---
+    await page.locator('#encap-weight').fill('30');
+    await page.locator('#encap-weight').dispatchEvent('input');
+    await expect(page.locator('#encap-weight-warn')).toBeVisible();
+    await encapDecap(page);
+    await expect(page.locator('#kem-match .match-failure')).toBeVisible();
+    await scan(page, `${theme} / decoding-failure verdict`);
+
+    // --- DFR lab: run a real batch so the chart, table and live region exist. ---
+    await page.locator('#dfr-weight').fill('30');
+    await page.locator('#dfr-weight').dispatchEvent('input');
+    await page.locator('#dfr-run').click();
+    await expect(page.locator('.dfr-table')).toBeVisible({ timeout: 60_000 });
+    // Wait for the batch to finish rather than sampling it mid-run: the button
+    // re-enables only when the last trial has landed. Generous by design — on a
+    // loaded machine 600 real decodes take a while, and the answer to that is a
+    // longer wait, not a smaller scan.
+    await expect(page.locator('#dfr-run')).toBeEnabled({ timeout: 120_000 });
+    await expect(page.locator('.dfr-live')).not.toBeEmpty();
+    await scan(page, `${theme} / dfr lab measured curve`);
+
+    // --- Everything above, re-checked at 380px where things start to scroll. ---
+    await page.setViewportSize({ width: 380, height: 720 });
+    await revealAll(page);
+    await expect(page.locator('#kem-match .match-failure')).toBeVisible();
+    await scan(page, `${theme} / 380px, fully driven`);
   });
-  const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-  const summary = results.violations.map((v) => ({
-    id: v.id,
-    impact: v.impact,
-    help: v.help,
-    nodes: v.nodes.map((n) => n.target.join(' ')).slice(0, 6),
-  }));
-  expect(summary).toEqual([]);
 }
-
-test('dynamic visualizations: no WCAG A/AA violations in dark theme', async ({ page }) => {
-  await page.goto('.');
-  await freezeMotion(page);
-  await driveFlow(page);
-  await scan(page);
-});
-
-test('dynamic visualizations: no WCAG A/AA violations in light theme', async ({ page }) => {
-  await page.goto('.');
-  await freezeMotion(page);
-  await page.locator('#cl-theme-toggle').click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await driveFlow(page);
-  await scan(page);
-});

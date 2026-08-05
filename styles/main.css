@@ -1469,9 +1469,15 @@ abbr.term {
   border-color: var(--accent);
 }
 
+/* The "0" glyph is real body text on a real control, so it owes 4.5:1 like any
+   other label. --text-muted (#8389ab) measured 4.26:1 on --bg-input (#252838);
+   --text-secondary is 5.90:1 dark and 7.03:1 light on the same fill. axe never
+   reported this: it files a one-character node as `incomplete` ("content is
+   too short to determine if it is actual text content"), which never reaches
+   the violations array a gate asserts on. */
 .circ-bit.circ-off {
   background: var(--bg-input);
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .circ-bit:hover { border-color: var(--accent); }
@@ -1845,6 +1851,13 @@ abbr.term {
    #04815a green dips just under 4.5:1. Darken it only in that context. */
 [data-theme="light"] .shared-secret.output-scroll { color: #036849; }
 
+/* .decrypted-text is not drawn on a bare theme surface either — it sits on its
+   own --success-bg tint, which composites to #ebf4f2 over the card. #04815a
+   measures 4.37:1 there (axe agreed: 4.36); the chip-safe #036849 is 6.09:1.
+   Only reachable after a successful decap + encrypt, which is why nothing had
+   ever measured it. */
+[data-theme="light"] .decrypted-text { color: #036849; }
+
 /* Trapdoor-viz tags reuse the success/warning tokens on tinted fills — same
    sub-4.5:1 issue as the status chips. Darken to the chip-safe shades. */
 [data-theme="light"] .kv-tag-sparse { color: #036849; }
@@ -1976,6 +1989,11 @@ abbr.term {
   margin-bottom: 0.4rem;
 }
 
+/* The light-theme --warning (#d97706) is only safe as a border or a fill; as
+   13px ink on its own --warning-bg tint (#fcf4eb over the card) it measures
+   2.93:1, well under AA. #b45309 (amber-700) is 4.61:1 on the same surface and
+   keeps the amber read. This warning only exists once the tamper slider is
+   pushed above t, a state no scan had ever entered. */
 .tamper-warn {
   margin: 0.5rem 0 0;
   font-size: 0.82rem;
@@ -1987,6 +2005,8 @@ abbr.term {
   padding: 0.45rem 0.6rem;
   line-height: 1.45;
 }
+
+[data-theme="light"] .tamper-warn { color: #b45309; }
 
 .dfr-slider {
   width: 100%;
