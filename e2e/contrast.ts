@@ -107,10 +107,47 @@ export async function auditContrast(page: Page): Promise<ContrastFailure[]> {
       return grad.map((g) => over(g, color));
     };
 
+    /**
+     * Does this element's own `clip` / `clip-path` reduce it to zero area?
+     *
+     * `clip: rect(t, r, b, l)` applies only to absolutely positioned boxes and
+     * is what the classic `.sr-only` recipe uses; `clip-path: inset(50%)` is the
+     * modern spelling of the same trick. Either at zero area means the
+     * compositor draws nothing, so there is no painted ink to measure — but the
+     * box still has a 1x1 rect, a non-zero opacity and passes
+     * `checkVisibility()`, so every other test in `isVisible` says "visible".
+     * Without this the walk composites visually-hidden text against whatever
+     * surface it happens to sit on and INVENTS failures: 1.15:1 for a card's
+     * screen-reader-only suit name, 4.39:1 for an `.sr-only` twin of an
+     * `aria-hidden` glyph. Deliberately narrow — only a ZERO-area clip
+     * qualifies, so a real partial clip is still measured.
+     */
+    const clippedToNothing = (cs: CSSStyleDeclaration): boolean => {
+      const clip = cs.clip;
+      if (clip && clip !== 'auto') {
+        const nums = clip.match(/-?[\d.]+/g)?.map(Number);
+        if (nums && nums.length === 4) {
+          // Tuple-typed: under `noUncheckedIndexedAccess` a plain destructure of
+          // `number[]` yields `number | undefined` for each name, which fails
+          // `tsc --noEmit` in the repos whose build typechecks the e2e tree.
+          const [top, right, bottom, left] = nums as [number, number, number, number];
+          if (bottom - top <= 0 || right - left <= 0) return true;
+        }
+      }
+      const path = cs.clipPath;
+      if (path && path.startsWith('inset(')) {
+        const pct = path.match(/([\d.]+)%/g)?.map((v) => parseFloat(v)) ?? [];
+        if (pct.length && pct.every((v) => v >= 50)) return true;
+      }
+      return false;
+    };
+
     const isVisible = (el: Element): boolean => {
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') return false;
       if (parseFloat(cs.opacity) === 0) return false;
+      // Visually hidden: a real box that paints no pixels. See above.
+      if (clippedToNothing(cs)) return false;
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0;
     };
