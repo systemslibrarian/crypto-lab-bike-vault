@@ -22,7 +22,7 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'npm run preview -- --port 4605 --strictPort',
+    command: 'npm run build && npm run preview -- --port 4605 --strictPort',
     url: 'http://localhost:4605/crypto-lab-bike-vault/',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
