@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { boot, revealAll, scan } from './gate';
+import { boot, expectBaselineNotStale, revealAll, scan } from './gate';
 
 /**
  * WCAG regression gate — the states the page only reaches after you use it.
@@ -105,5 +105,21 @@ for (const theme of ['dark', 'light'] as const) {
     await revealAll(page);
     await expect(page.locator('#kem-match .match-failure')).toBeVisible();
     await scan(page, `${theme} / 380px, fully driven`);
+
+    // The third ratchet rule, and it belongs HERE rather than in
+    // `a11y.spec.ts`. `expectBaselineNotStale` fails on any baselined finding
+    // that never appeared, which is what forces a fixed entry to be deleted
+    // instead of lingering as a permanent exemption — without it the baseline
+    // can only grow. It was defined in `gate.ts` and exported but never called
+    // from anywhere, so that rule had never once run.
+    //
+    // Only this file can run it. `nonTextSeen` is module state, so the check
+    // sees exactly the states ITS OWN spec file drove, and the two specs drive
+    // different subsets: the static spec never clicks `#decap-btn` and never
+    // renders a `.dv-frame`, so `button#decap-btn.btn.btn-secondary.btn-large`
+    // and `button.btn.btn-secondary.dv-btn` cannot appear there — calling it in
+    // that file reports both as stale on every run. This spec's drive reaches
+    // all six baselined selectors, so it is the only place the rule is sound.
+    expectBaselineNotStale();
   });
 }
