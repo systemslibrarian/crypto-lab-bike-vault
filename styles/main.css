@@ -131,6 +131,21 @@
   padding: 0;
 }
 
+/* The `hidden` attribute must actually hide, everywhere, once.
+   The UA rule is `[hidden] { display: none }` — an attribute selector, whose
+   specificity (0,1,0) is exactly a class's, so any later `.foo { display: … }`
+   beats it. `.dfr-progress { display: grid }` did: the DFR lab writes its
+   progress bar into the page carrying `hidden`, and an empty 878x16 track
+   painted for the whole time panel 3 was open, before any run had started. The
+   assignment at the end of a run (`progress.hidden = true`) was equally inert,
+   so a finished run left a full bar standing under the results.
+   Fixed at the root rather than as a `.dfr-progress[hidden]` patch, because the
+   next class that sets `display` on a hideable element would need the patch
+   repeated. `!important` so it cannot silently lose the race again. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   font-size: var(--base-font);
   scroll-behavior: smooth;
