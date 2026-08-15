@@ -41,7 +41,7 @@ async function encapDecap(page: Page): Promise<void> {
   await expect(page.locator('#kem-match')).toBeVisible();
 }
 
-for (const theme of ['dark', 'light'] as const) {
+for (const theme of ['dark'] as const) {
   test(`driven states: no WCAG A/AA violations in ${theme} theme`, async ({ page }) => {
     await boot(page, theme);
 

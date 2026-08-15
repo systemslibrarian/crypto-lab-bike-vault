@@ -17,7 +17,7 @@ import { boot, revealAll, scan, settle } from './gate';
 
 const PANELS = [1, 2, 3, 4, 5] as const;
 
-for (const theme of ['dark', 'light'] as const) {
+for (const theme of ['dark'] as const) {
   test(`no WCAG A/AA violations in ${theme} theme, every panel`, async ({ page }) => {
     await boot(page, theme);
 

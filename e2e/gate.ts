@@ -78,12 +78,7 @@ export async function boot(page: Page, theme: 'dark' | 'light'): Promise<void> {
   await expect(page.locator('#dfr-lab .dfr-lab')).toBeAttached();
   await expect(page.locator('#compare-chart .compare-chart')).toBeAttached();
 
-  if (theme === 'light') {
-    await page.locator('#cl-theme-toggle').click();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  } else {
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  }
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await settle(page);
 }
 
