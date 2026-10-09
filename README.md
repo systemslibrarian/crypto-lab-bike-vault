@@ -62,3 +62,10 @@ No environment variables are required.
 *Part of the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
+
+## Publishing requests
+
+`npm run deploy` requests the existing `deploy-pages.yml` workflow at `main`.
+The workflow retains unit, production-build and complete browser gates.
+Request success does not establish publication; inspect current-head CI,
+actual deployment and the public application. Failed requests retain their nonzero status.
