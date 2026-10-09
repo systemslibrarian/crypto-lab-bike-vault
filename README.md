@@ -24,6 +24,7 @@ The demo lets you move through BIKE primer material, run key generation, perform
 
 ## What Can Go Wrong
 
+- **Stale session state:** AES is available only after matching shared secrets in the current KEM attempt. New key generation, encapsulation and decapsulation invalidate prior AES keys and outputs; failed or outdated asynchronous results cannot report a current end-to-end success.
 - **Decoding failures:** QC-MDPC decoders have a nonzero decoding-failure rate, and the bit-flipping decoder must be tuned to keep that rate negligibly small.
 - **Reaction attacks:** leaking whether decapsulation succeeded or failed across many queries can reveal information about the secret key, so the IND-CCA transform and constant-time decoding matter.
 - **Not a finalized standard:** BIKE was a NIST PQC round-4 candidate and was not selected for standardization, so it is less settled than ML-KEM.
@@ -61,3 +62,10 @@ No environment variables are required.
 *Part of the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
+
+## Publishing requests
+
+`npm run deploy` requests the existing `deploy-pages.yml` workflow at `main`.
+The workflow retains unit, production-build and complete browser gates.
+Request success does not establish publication; inspect current-head CI,
+actual deployment and the public application. Failed requests retain their nonzero status.

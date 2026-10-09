@@ -20,10 +20,32 @@ let currentEncap: EncapResult | null = null;
 let currentErrorWeight = SIM_T;
 let sharedSecretForAes: Uint8Array | null = null;
 let stopDecoderViz: (() => void) | null = null;
+let kemGeneration = 0;
+let aesBusy = false;
 
 // --- Helpers ---
 function $(id: string): HTMLElement {
   return document.getElementById(id)!;
+}
+
+function invalidateAes(): void {
+  sharedSecretForAes = null;
+  $('aes-output').innerHTML = '';
+  $('aes-prereq').style.display = 'block';
+  $('aes-section').style.display = 'none';
+  ($('aes-encrypt-btn') as HTMLButtonElement).disabled = true;
+}
+
+function invalidateEncapsulation(): void {
+  currentEncap = null;
+  ($('decap-btn') as HTMLButtonElement).disabled = true;
+  $('encap-output').innerHTML = '';
+  $('decap-output').innerHTML = '';
+  $('kem-match').style.display = 'none';
+  if (stopDecoderViz) { stopDecoderViz(); stopDecoderViz = null; }
+  $('decoder-viz-wrap').hidden = true;
+  $('decoder-viz').innerHTML = '';
+  invalidateAes();
 }
 
 /**
@@ -94,12 +116,21 @@ function initKeyGen(): void {
   const output = $('keygen-output');
 
   btn.addEventListener('click', async () => {
+    if (btn.disabled) return;
+    const generation = ++kemGeneration;
+    currentKeyPair = null;
+    invalidateEncapsulation();
+    updateEncapPrereq();
+    $('keyviz-prereq').hidden = false;
+    $('keyviz').hidden = true;
+    $('keyviz').innerHTML = '';
     btn.disabled = true;
     btn.textContent = 'Generating…';
     output.innerHTML = `<p class="loading-text">Generating keypair at the simulation parameters (r=${SIM_R}, w=${SIM_W}, t=${SIM_T})…</p>`;
 
     try {
       const kp = await bikeKeyGen();
+      if (generation !== kemGeneration) return;
       currentKeyPair = kp;
 
       output.innerHTML = `
@@ -191,19 +222,17 @@ function initEncapDecap(): void {
   }
 
   encapBtn.addEventListener('click', async () => {
-    if (!currentKeyPair) return;
+    if (!currentKeyPair || encapBtn.disabled) return;
+    const keyPair = currentKeyPair;
+    const generation = ++kemGeneration;
+    invalidateEncapsulation();
     encapBtn.disabled = true;
     encapBtn.textContent = 'Encapsulating…';
     encapOutput.innerHTML = '<p class="loading-text">Generating error vector and computing ciphertext…</p>';
-    decapOutput.innerHTML = '';
-    matchDiv.style.display = 'none';
-    // A fresh encapsulation invalidates any prior decoder run.
-    if (stopDecoderViz) { stopDecoderViz(); stopDecoderViz = null; }
-    $('decoder-viz-wrap').hidden = true;
-    $('decoder-viz').innerHTML = '';
 
     try {
-      const result = await bikeEncap(currentKeyPair.publicKey, currentErrorWeight);
+      const result = await bikeEncap(keyPair.publicKey, currentErrorWeight);
+      if (generation !== kemGeneration || currentKeyPair !== keyPair) return;
       currentEncap = result;
 
       encapOutput.innerHTML = `
@@ -234,6 +263,7 @@ function initEncapDecap(): void {
 
       decapBtn.disabled = false;
     } catch (err) {
+      if (generation !== kemGeneration) return;
       encapOutput.innerHTML = `<p class="error-text" role="alert">Encapsulation failed: ${escapeHtml(String(err))}</p>`;
     } finally {
       encapBtn.disabled = false;
@@ -242,20 +272,28 @@ function initEncapDecap(): void {
   });
 
   decapBtn.addEventListener('click', async () => {
-    if (!currentKeyPair || !currentEncap) return;
+    if (!currentKeyPair || !currentEncap || decapBtn.disabled) return;
+    const keyPair = currentKeyPair;
+    const encapsulation = currentEncap;
+    const generation = ++kemGeneration;
+    invalidateAes();
+    matchDiv.style.display = 'none';
+    if (stopDecoderViz) { stopDecoderViz(); stopDecoderViz = null; }
+    $('decoder-viz-wrap').hidden = true;
+    $('decoder-viz').innerHTML = '';
     decapBtn.disabled = true;
     decapBtn.textContent = 'Decapsulating…';
     decapOutput.innerHTML = '<p class="loading-text">Running Black-Gray-Flip decoder…</p>';
 
     try {
       const result = await bikeDecap(
-        currentEncap.ciphertext,
-        currentKeyPair.privateH0,
-        currentKeyPair.privateH1,
+        encapsulation.ciphertext,
+        keyPair.privateH0,
+        keyPair.privateH1,
       );
+      if (generation !== kemGeneration || currentKeyPair !== keyPair || currentEncap !== encapsulation) return;
 
       // Render the step-by-step Black-Gray-Flip decoder from the real trace.
-      if (stopDecoderViz) { stopDecoderViz(); stopDecoderViz = null; }
       const dvWrap = $('decoder-viz-wrap');
       const dvContainer = $('decoder-viz');
       dvWrap.hidden = false;
@@ -308,10 +346,13 @@ function initEncapDecap(): void {
       }
 
     } catch (err) {
+      if (generation !== kemGeneration) return;
       decapOutput.innerHTML = `<p class="error-text" role="alert">Decapsulation failed: ${escapeHtml(String(err))}</p>`;
     } finally {
-      decapBtn.disabled = false;
-      decapBtn.textContent = 'Decapsulate (Bob)';
+      if (generation === kemGeneration) {
+        decapBtn.disabled = currentEncap === null;
+        decapBtn.textContent = 'Decapsulate (Bob)';
+      }
     }
   });
 }
@@ -321,6 +362,7 @@ function showAesSection(): void {
   const section = $('aes-section');
   prereq.style.display = 'none';
   section.style.display = 'block';
+  ($('aes-encrypt-btn') as HTMLButtonElement).disabled = aesBusy;
 }
 
 function initAes(): void {
@@ -329,11 +371,12 @@ function initAes(): void {
   const output = $('aes-output');
 
   // Show prereq initially
-  $('aes-prereq').style.display = 'block';
-  $('aes-section').style.display = 'none';
+  invalidateAes();
 
   const doEncrypt = async () => {
-    if (!sharedSecretForAes) return;
+    if (!sharedSecretForAes || aesBusy) return;
+    const secret = sharedSecretForAes;
+    const generation = kemGeneration;
     const msg = input.value.trim();
     if (!msg) {
       output.innerHTML = '<p class="error-text" role="alert">Please enter a message to encrypt.</p>';
@@ -341,10 +384,12 @@ function initAes(): void {
     }
 
     btn.disabled = true;
+    aesBusy = true;
     btn.textContent = 'Encrypting…';
 
     try {
-      const result = await aesEncryptDecrypt(sharedSecretForAes, msg);
+      const result = await aesEncryptDecrypt(secret, msg);
+      if (generation !== kemGeneration || sharedSecretForAes !== secret) return;
 
       output.innerHTML = `
         <div class="output-section">
@@ -361,9 +406,11 @@ function initAes(): void {
         </div>
       `;
     } catch (err) {
+      if (generation !== kemGeneration || sharedSecretForAes !== secret) return;
       output.innerHTML = `<p class="error-text" role="alert">Encryption failed: ${escapeHtml(String(err))}</p>`;
     } finally {
-      btn.disabled = false;
+      aesBusy = false;
+      btn.disabled = sharedSecretForAes === null;
       btn.textContent = 'Encrypt';
     }
   };
