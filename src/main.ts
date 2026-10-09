@@ -294,7 +294,6 @@ function initEncapDecap(): void {
       if (generation !== kemGeneration || currentKeyPair !== keyPair || currentEncap !== encapsulation) return;
 
       // Render the step-by-step Black-Gray-Flip decoder from the real trace.
-      if (stopDecoderViz) { stopDecoderViz(); stopDecoderViz = null; }
       const dvWrap = $('decoder-viz-wrap');
       const dvContainer = $('decoder-viz');
       dvWrap.hidden = false;
