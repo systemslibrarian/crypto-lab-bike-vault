@@ -31,6 +31,8 @@ The demo lets you move through BIKE primer material, run key generation, perform
 - **Simulation, not hardened:** this browser demo illustrates the BIKE flow and is not a constant-time, validated implementation.
 - **Symmetric-layer misuse:** the AES-256-GCM step still requires correct nonce handling; a KEM does not protect against misuse of the data-encryption stage.
 
+- **Physical fault injection:** [Paiva et al., ePrint 2026/2492 (15 October 2026)](https://eprint.iacr.org/2026/2492) report HQC/BIKE key recovery using valid ciphertexts and faults in decapsulation outside the Fujisaki–Okamoto verification step, with laser fault-injection experiments on an STM32H7 microcontroller. This is a demonstrated hardware attack under physical fault-injection conditions, not a mathematical break of the code-based assumptions or a remote browser attack. Protecting the FO check alone does not cover the full fault surface; constant-time execution addresses timing leakage, not injected faults. This browser demo does not reproduce the hardware attack or establish fault resistance.
+
 ## Real-World Usage
 
 - BIKE is a code-based KEM that was a NIST Post-Quantum Cryptography round-4 candidate, evaluated as part of broadening beyond lattice assumptions.
