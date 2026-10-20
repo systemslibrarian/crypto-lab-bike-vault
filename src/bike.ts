@@ -237,7 +237,11 @@ export function toHex(arr: Uint8Array): string {
 }
 
 /** SHA-256 hash via WebCrypto */
-async function sha256(data: Uint8Array): Promise<Uint8Array> {
+/* Exported so a published vector can be asserted THROUGH this function rather
+ * than against crypto.subtle directly. The first version of the test did the
+ * latter, and a mutation switching this digest to SHA-1 went uncaught: the
+ * assertion was testing WebCrypto, not the shared-secret derivation. */
+export async function sha256(data: Uint8Array): Promise<Uint8Array> {
   const hash = await crypto.subtle.digest('SHA-256', data as unknown as BufferSource);
   return new Uint8Array(hash);
 }
