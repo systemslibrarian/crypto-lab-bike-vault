@@ -13,10 +13,10 @@
     "deploy": "gh workflow run deploy-pages.yml --repo systemslibrarian/crypto-lab-bike-vault --ref main"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.64.0",
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
     "typescript": "^5.4.0",
     "vite": "^8.3.4",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.5"
   }
 }
