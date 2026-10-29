@@ -172,9 +172,9 @@ export function renderDecoderViz(container: HTMLElement, data: DecoderVizData): 
   shell.className = 'decoder-viz';
   shell.innerHTML = `
     <div class="dv-controls" role="group" aria-label="Black-Gray-Flip decoder playback">
-      <button type="button" class="btn btn-secondary dv-btn" data-act="prev" aria-label="Previous decoder iteration">‹ Step back</button>
+      <button type="button" class="btn btn-secondary dv-btn" data-act="prev" aria-label="Step back: the previous decoder iteration">Step back</button>
       <button type="button" class="btn btn-primary dv-btn" data-act="play" aria-label="Play the decoder iteration animation">▶ Play</button>
-      <button type="button" class="btn btn-secondary dv-btn" data-act="next" aria-label="Next decoder iteration">Step ›</button>
+      <button type="button" class="btn btn-secondary dv-btn" data-act="next" aria-label="Step: the next decoder iteration">Step</button>
       <button type="button" class="btn btn-secondary dv-btn" data-act="reset" aria-label="Reset decoder animation to first iteration">↺ Reset</button>
     </div>
     <div class="dv-legend" aria-hidden="true">

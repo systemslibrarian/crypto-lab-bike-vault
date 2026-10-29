@@ -2176,3 +2176,10 @@ abbr.term {
 .dfr-claims li { margin-bottom: 0.4rem; }
 
 .table-fn { font-weight: 400; font-size: 0.75rem; color: var(--text-secondary); }
+
+/* The decoder step chevrons, drawn here rather than written as DOM text. axe
+   4.14 compares a control's accessible name against everything a SIGHTED user
+   sees (label-content-name-mismatch, WCAG 2.5.3 Label in Name), so a chevron
+   in the button's text has to appear in its name or leave the DOM. */
+.dv-btn[data-act="prev"]::before { content: "\2039\00A0"; }
+.dv-btn[data-act="next"]::after  { content: "\00A0\203A"; }
