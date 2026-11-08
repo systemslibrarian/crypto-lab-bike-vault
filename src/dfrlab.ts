@@ -35,7 +35,7 @@ type Curve = Map<number, Point>;
 
 function fmtRate(failures: number, trials: number): string {
   if (trials === 0) return '—';
-  if (failures === 0) return `0 / ${trials.toLocaleString()} (< ${(100 / trials).toFixed(2)}%)`;
+  if (failures === 0) return `0 failures observed in ${trials.toLocaleString()} decodes; empirical rate 0%`;
   const pct = (100 * failures) / trials;
   const log2 = Math.log2(failures / trials);
   return `${failures.toLocaleString()} / ${trials.toLocaleString()} = ${pct.toFixed(2)}% ≈ 2<sup>${log2.toFixed(1)}</sup>`;
@@ -109,6 +109,8 @@ export function renderDfrLab(container: HTMLElement): () => void {
         <span class="dfr-progress-label"></span>
       </div>
       <p class="dfr-live" role="status" aria-live="polite"></p>
+      <p class="dfr-slider-help">Zero observed failures do not establish that the true decoding-failure rate is below 1/N.
+        Decodes share a key within each batch; no independent-trial confidence bound is computed here.</p>
       <div class="dfr-results"></div>
     </div>
   `;
