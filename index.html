@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive browser demo of BIKE (Bit Flipping Key Encapsulation) — a code-based post-quantum KEM and NIST Round 4 alternate candidate." />
+  <meta name="description" content="Interactive browser demo of BIKE (Bit Flipping Key Encapsulation) — a code-based post-quantum KEM and NIST Round 4 candidate that was not selected for standardization." />
   <title>BIKE Vault — Post-Quantum Code-Based KEM Demo</title>
   <script>
     // Dark is the only theme. Pin it before first paint, and overwrite any
@@ -198,7 +198,7 @@
           <div class="term-item"><dt>Circulant</dt><dd>A square matrix in which each row is the row above it, shifted one step to the right (wrapping around). Fully described by its first row.</dd></div>
           <div class="term-item"><dt>Ring F₂[x]/(xʳ−1)</dt><dd>Polynomials with 0/1 coefficients where <code>xʳ = 1</code>. Multiplying by <code>x</code> is exactly a cyclic shift — so a circulant matrix <em>is</em> a polynomial in this ring.</dd></div>
           <div class="term-item"><dt>Systematic form</dt><dd>A code layout where the message bits appear verbatim inside the codeword, followed by parity bits — so decoding just reads off the first block.</dd></div>
-          <div class="term-item"><dt>LPN</dt><dd>Learning Parity with Noise — recovering a secret from many noisy linear equations over F₂. The average-case hard problem underneath BIKE.</dd></div>
+          <div class="term-item"><dt>QCSD / QCCF</dt><dd>Quasi-Cyclic Syndrome Decoding and Quasi-Cyclic Codeword Finding — the two average-case hard problems BIKE's security rests on: recover a sparse error from a quasi-cyclic syndrome, and find a low-weight codeword in a quasi-cyclic code.</dd></div>
         </dl>
       </details>
 
@@ -256,11 +256,12 @@
       <details class="deeper-card card">
         <summary class="deeper-summary">
           <span class="deeper-chip">Go deeper</span>
-          The LPN / Syndrome-Decoding hardness assumption
+          The QCSD / QCCF hardness assumptions
         </summary>
         <div class="deeper-body">
-          <p>BIKE's security rests on the <strong><abbr class="term" title="Learning Parity with Noise: given many noisy linear equations over F₂, recover the secret. The average-case hardness BIKE relies on.">Learning Parity with Noise (LPN)</abbr></strong> problem — specifically, the difficulty of decoding a random quasi-cyclic code. Given a random <abbr class="term" title="Syndrome: s = H·r. Zero means r is a valid codeword; non-zero encodes where the errors are.">syndrome</abbr> <code>s = H · e</code> where <strong>e</strong> is a sparse error vector, recovering <strong>e</strong> is believed to be hard even for quantum computers.</p>
-          <p>This is related to the <strong>Syndrome Decoding Problem</strong>, which has been studied since the 1960s and is NP-hard in the worst case.</p>
+          <p>BIKE's security rests on two quasi-cyclic coding problems: <strong><abbr class="term" title="Quasi-Cyclic Syndrome Decoding: given a quasi-cyclic parity-check matrix and a syndrome, recover the sparse error vector that produced it.">Quasi-Cyclic Syndrome Decoding (QCSD)</abbr></strong> and <strong><abbr class="term" title="Quasi-Cyclic Codeword Finding: given a quasi-cyclic parity-check matrix, find a codeword of the given low weight. This is BIKE's key-recovery problem.">Quasi-Cyclic Codeword Finding (QCCF)</abbr></strong>. For QCSD, given a random <abbr class="term" title="Syndrome: s = H·r. Zero means r is a valid codeword; non-zero encodes where the errors are.">syndrome</abbr> <code>s = H · e</code> where <strong>e</strong> is a sparse error vector, recovering <strong>e</strong> is believed to be hard even for quantum computers. QCCF is the key-recovery side: finding the sparse private rows hidden inside the public key.</p>
+          <p>Both are quasi-cyclic versions of the generic <strong>Syndrome Decoding</strong> and <strong>Codeword Finding</strong> problems, which have been studied since the 1960s and were proven NP-complete in the generic case.</p>
+          <p class="cite">Sources: <a href="https://bikesuite.org" target="_blank" rel="noopener">BIKE Specification</a>, Appendix B.1.1 (Problems 3 and 4); <a href="https://csrc.nist.gov/pubs/ir/8545/final" target="_blank" rel="noopener">NIST IR 8545</a> §§3.1–3.2 (BIKE depends on decisional QCSD and additionally QCCF).</p>
         </div>
       </details>
 
@@ -277,7 +278,7 @@
 
       <div class="card">
         <div class="status-chip-row">
-          <span class="status-chip status-round4">NIST Round 4 Alternate</span>
+          <span class="status-chip status-round4">NIST Round 4 — Not Selected</span>
           <span class="status-chip status-sim">⚠ Illustrative — not production BIKE</span>
         </div>
         <p>BIKE key generation produces a keypair using QC-MDPC code structure. This page runs the <strong>BIKE Level 1 structure at reduced parameters</strong> so every step completes instantly in the browser: <strong>r = <span data-param="sim-r"></span>, w = <span data-param="sim-w"></span> (w/2 = <span data-param="sim-half-w"></span> per block), t = <span data-param="sim-t"></span></strong>. Spec BIKE Level 1 is r = <span data-param="spec-r"></span>, w = <span data-param="spec-w"></span>, t = <span data-param="spec-t"></span> — the table below is the published spec, not what runs here.</p>
@@ -516,11 +517,11 @@
               </tr>
               <tr>
                 <th scope="row">NIST Status</th>
-                <td><span class="status-chip status-round4">Round 4 Alt</span></td>
+                <td><span class="status-chip status-round4">Round 4 — Not Selected</span></td>
                 <td><span class="status-chip status-standard">Standardized</span></td>
-                <td><span class="status-chip status-round4">Round 4 Alt</span></td>
+                <td><span class="status-chip status-round4">Round 4 — Not Selected</span></td>
                 <td><span class="status-chip status-standard">Standardized</span></td>
-                <td><span class="status-chip status-round4">Round 4 Alt</span></td>
+                <td><span class="status-chip status-round4">Round 4 — Not Selected</span></td>
                 <td><span class="status-chip status-standard">Standardized</span></td>
               </tr>
             </tbody>
@@ -562,7 +563,7 @@
             <span class="status-chip status-round4">Diversity Use Cases</span>
           </div>
         </div>
-        <p class="note"><strong>Key tradeoff:</strong> BIKE has much smaller keys than Classic McEliece (the other code-based candidate) but has a non-zero decapsulation failure rate, unlike ML-KEM's essentially negligible DFR. For protocols requiring perfect correctness, ML-KEM is the better choice.</p>
+        <p class="note"><strong>Key tradeoff:</strong> BIKE has much smaller keys than Classic McEliece, one of the two other code-based fourth-round candidates alongside HQC. BIKE has a non-zero decapsulation failure rate — but so does ML-KEM: <a href="https://csrc.nist.gov/pubs/fips/203/final" target="_blank" rel="noopener">FIPS 203</a> Table 1 gives ML-KEM-768 a decapsulation failure rate of 2<sup>−164.8</sup>. Neither scheme is perfectly correct. The difference is that ML-KEM's rate is computed from its own parameters, while BIKE's rests on a decoder analysis <a href="https://csrc.nist.gov/pubs/ir/8545/final" target="_blank" rel="noopener">NIST IR 8545</a> judged less mature than HQC's.</p>
       </div>
 
       <div class="card bridge-card">
@@ -578,7 +579,7 @@
       <div class="card">
         <h3>Cryptographic Diversity</h3>
         <p>The NIST post-quantum standardization process selected ML-KEM (lattice-based) as the primary KEM standard, then in March 2025 selected the <strong>code-based</strong> HQC as a backup on a different mathematical assumption — precisely because <em>no single assumption should be a single point of failure</em>. The isogeny-based candidate SIKE made the same diversity argument and was broken outright in 2022 by a classical attack, which is a reminder that diversity is a hedge, not a guarantee.</p>
-        <p>If a breakthrough attack against lattice problems emerges, code-based schemes like HQC, BIKE, and Classic McEliece would remain secure — and vice versa. That is the <strong>cryptographic diversity argument</strong>, and it is why the syndrome-decoding problem this page is built on is worth understanding even though BIKE itself did not advance.</p>
+        <p>A breakthrough attack against lattice problems would not by itself break code-based schemes like HQC, BIKE, and Classic McEliece — or the other way round. That is the <strong>cryptographic diversity argument</strong>: diversification, not a guarantee, as SIKE showed. It is why the syndrome-decoding problem this page is built on is worth understanding even though BIKE itself did not advance.</p>
       </div>
 
       <div class="card">
@@ -603,7 +604,7 @@
           <li><strong>Compact alternative to Classic McEliece:</strong> Public keys ~1.5 KB vs ~261 KB at Level 1</li>
           <li><strong>Same mathematical family:</strong> Both rely on the hardness of decoding random codes</li>
           <li><strong>Tradeoff:</strong> BIKE has non-zero DFR; Classic McEliece has zero DFR but enormous keys</li>
-          <li><strong>Use cases:</strong> Where ML-KEM is primary but code-based diversity is desired as a backup or in hybrid constructions</li>
+          <li><strong>Use cases:</strong> Code-based diversity alongside ML-KEM — a role NIST's March 2025 selection of HQC now fills on the standards track, leaving BIKE a study design rather than a deployment option</li>
         </ul>
       </div>
 
@@ -613,7 +614,7 @@
         <blockquote>
           <p><strong>Don't put all your eggs in one mathematical basket.</strong></p>
         </blockquote>
-        <p>ML-KEM should be the default choice for most deployments. But organizations with long-term security requirements should consider <strong>hybrid approaches</strong> that include code-based schemes like BIKE — ensuring that a breakthrough against lattices doesn't compromise everything at once.</p>
+        <p>ML-KEM should be the default choice for most deployments. Organizations with long-term security requirements may want a code-based scheme alongside it, so that a breakthrough against lattices would not compromise everything at once — but the standards-track code-based KEM is <strong>HQC</strong> (<a href="https://csrc.nist.gov/pubs/ir/8545/final" target="_blank" rel="noopener">NIST IR 8545</a>, March 2025), not BIKE, which has no NIST standardization path. And as SIKE showed, that is diversification, not a guarantee.</p>
       </div>
 
       <div class="card">
