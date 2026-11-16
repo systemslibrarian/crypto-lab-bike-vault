@@ -12,10 +12,10 @@ function npmInvocation() {
   // npm exposes the CLI that launched this child. Do not infer it from the Node binary:
   // Homebrew installs Node and npm in separate prefixes, so that assumption breaks on Node 26.
   if (process.env.npm_execpath) {
-    return { command: process.execPath, args: [process.env.npm_execpath] };
+    return { command: process.execPath, args: [process.env.npm_execpath], shell: false };
   }
   // Preserve direct `node --test` use as well; PATH below retains the platform npm launcher.
-  return { command: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: [] };
+  return { command: 'npm', args: [], shell: process.platform === 'win32' };
 }
 
 // Replace only the external GitHub boundary; exercise the real npm script.
@@ -31,7 +31,7 @@ function request(exitCode) {
       cwd: root,
       env: { ...process.env, PATH: dir + delimiter + process.env.PATH, GH_TOKEN: '', PUBLISH_CONTROL_EXIT: String(exitCode) },
       encoding: 'utf8',
-      shell: !process.env.npm_execpath && process.platform === 'win32',
+      shell: npm.shell,
       timeout: 30000,
     });
   } finally {
