@@ -394,7 +394,7 @@
         </ol>
         <p class="note"><strong>Decapsulation Failure Rate (DFR):</strong> BIKE has a non-zero DFR — the decoder may fail for some error patterns, so BIKE is not suitable for protocols requiring <em>perfect correctness</em>. Two different numbers, and they are not interchangeable:</p>
         <ul class="dfr-claims">
-          <li><strong>Spec BIKE Level 1</strong> (r = <span data-param="spec-r"></span>, t = <span data-param="spec-t"></span>): DFR &lt; 2<sup>−128</sup>, by design — an event nobody will ever observe. ML-KEM's &lt; 2<sup>−139</sup> is comparably negligible.</li>
+          <li><strong>Spec BIKE Level 1</strong> (r = <span data-param="spec-r"></span>, t = <span data-param="spec-t"></span>): the specification's <em>design target</em> is DFR &lt; 2<sup>−128</sup>. That is a target, not a proven bound: Wang, Wang and Wang (2023) construct a class of weak keys that puts a lower bound of about 2<sup>−117</sup> on the average DFR (2<sup>−116.61</sup>, or 2<sup>−117.77</sup> at 95% confidence), and use it for a key-recovery attack of cost 2<sup>116.61</sup>. ML-KEM-512's rate, for comparison, is 2<sup>−138.8</sup> (FIPS 203, Table 1). None of these is a rate a browser tab could ever measure.</li>
           <li><strong>This page</strong> (r = <span data-param="sim-r"></span>, t = <span data-param="sim-t"></span>): the reduced parameters are far weaker, and the measured rate is roughly <strong>0.5%</strong> — about 2<sup>−7.6</sup>, or 1 decode in 200. That is not a flaw in the decoder; it is what shrinking r by a factor of 21 costs you. Do not read the 2<sup>−128</sup> figure onto anything that runs in this tab.</li>
         </ul>
         <p class="note">The rate quoted above is not a constant typed into the page — measure it yourself in the <strong>DFR lab</strong> below, and push the error weight up to watch it climb.</p>
@@ -511,9 +511,9 @@
               </tr>
               <tr>
                 <th scope="row">Decap Failure Rate <span class="table-fn">(spec)</span></th>
-                <td>&lt; 2<sup>−128</sup></td><td>&lt; 2<sup>−139</sup></td>
-                <td>&lt; 2<sup>−192</sup></td><td>&lt; 2<sup>−164</sup></td>
-                <td>&lt; 2<sup>−256</sup></td><td>&lt; 2<sup>−174</sup></td>
+                <td>&lt; 2<sup>−128</sup> <span class="table-fn">(target)</span></td><td>2<sup>−138.8</sup></td>
+                <td>&lt; 2<sup>−192</sup> <span class="table-fn">(target)</span></td><td>2<sup>−164.8</sup></td>
+                <td>&lt; 2<sup>−256</sup> <span class="table-fn">(target)</span></td><td>2<sup>−174.8</sup></td>
               </tr>
               <tr>
                 <th scope="row">NIST Status</th>
@@ -528,6 +528,7 @@
           </table>
         </div>
         <p class="note">Every figure in this table is a <strong>specification</strong> figure at full parameters. The simulation running on this page uses r = <span data-param="sim-r"></span> instead of <span data-param="spec-r"></span>, and its measured decoding-failure rate is around 0.5% — roughly 2<sup>−7.6</sup>, not 2<sup>−128</sup>. The DFR lab in Panel 3 measures it live.</p>
+        <p class="note">The two failure-rate columns are not the same kind of number. BIKE's are the specification's design targets, which no proof establishes: for Level 1, Wang, Wang and Wang, &ldquo;Exploring Decryption Failures of BIKE: New Class of Weak Keys and Key Recovery Attacks&rdquo; (2023), give a weak-key lower bound of 2<sup>−116.61</sup> on the average rate, above the 2<sup>−128</sup> target. ML-KEM's are the rates printed in FIPS 203, Table 1.</p>
         <p class="cite">Sources: <a href="https://bikesuite.org" target="_blank" rel="noopener">BIKE Spec</a>, <a href="https://pq-crystals.org/kyber/" target="_blank" rel="noopener">CRYSTALS-Kyber / ML-KEM Spec (FIPS 203)</a></p>
       </div>
 

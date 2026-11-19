@@ -42,6 +42,41 @@ describe('index.html factual claims', () => {
     expect(page).not.toContain('requiring perfect correctness');
   });
 
+  it('quotes every ML-KEM failure rate exactly as FIPS 203 Table 1 prints it', () => {
+    // Table 1: ML-KEM-512 2^-138.8, ML-KEM-768 2^-164.8, ML-KEM-1024 2^-174.8.
+    // The page used to say "< 2^-139" for ML-KEM-512, which is false:
+    // 2^-138.8 is larger than 2^-139.
+    for (const exp of ['138.8', '164.8', '174.8']) {
+      expect(page).toContain(`<td>2<sup>−${exp}</sup></td>`);
+    }
+    expect(page).not.toContain('2<sup>−139</sup>');
+    expect(page).not.toMatch(/&lt; 2<sup>−1(64|74)<\/sup>/);
+  });
+
+  it('calls BIKE 2^-128 a design target and cites the weak-key lower bound', () => {
+    // Wang, Wang and Wang, "Exploring Decryption Failures of BIKE: New Class
+    // of Weak Keys and Key Recovery Attacks" (2023): DFR_avg >= 2^-116.61
+    // for the 128-bit parameter set (2^-117.77 at 95% confidence), and a key
+    // recovery of cost 2^116.61. So 2^-128 is a target, not a bound, and "an
+    // event nobody will ever observe" claimed more than anyone has shown.
+    const dfrlab = readFileSync(
+      fileURLToPath(new URL('../src/dfrlab.ts', import.meta.url)),
+      'utf8',
+    );
+    for (const text of [page, dfrlab]) {
+      expect(text).not.toMatch(/nobody will ever observe/i);
+      expect(text).not.toMatch(/too rare to ever observe/i);
+      expect(text).toMatch(/design[\s\S]{0,12}target/);
+      expect(text).toContain('Wang, Wang and Wang');
+    }
+    expect(page).not.toContain('by design — an event');
+    expect(page).toContain('2<sup>−116.61</sup>');
+    expect(page).toContain('2<sup>−117.77</sup>');
+    // Every BIKE cell in the failure-rate row is marked as a target.
+    const row = /Decap Failure Rate[\s\S]*?<\/tr>/.exec(page)![0];
+    expect(row.split('(target)').length - 1).toBe(3);
+  });
+
   it('counts HQC as a code-based candidate beside Classic McEliece', () => {
     expect(page).not.toContain('Classic McEliece (the other code-based candidate)');
     expect(page).toContain('code-based fourth-round candidates alongside HQC');

@@ -2,7 +2,11 @@
  * dfrlab.ts — "Break the decoder": error weight vs measured decoding-failure rate.
  *
  * BIKE's headline correctness claim is a number you are normally asked to take on
- * faith (DFR < 2⁻¹²⁸ at spec parameters — far too rare to ever observe). This panel
+ * faith: the spec's design target is DFR < 2⁻¹²⁸ at spec parameters. It is a target,
+ * not a proven bound — Wang, Wang and Wang, "Exploring Decryption Failures of BIKE:
+ * New Class of Weak Keys and Key Recovery Attacks" (2023), give a weak-key lower
+ * bound of about 2⁻¹¹⁷ on the average (2⁻¹¹⁶·⁶¹; 2⁻¹¹⁷·⁷⁷ at 95% confidence) — and
+ * either figure is far below anything a browser could measure. This panel
  * turns the claim into something you can watch move: crank the error weight past
  * what the code is provisioned to correct and run a few hundred real decodes, and
  * the failure rate climbs off the floor and saturates at 100%.
