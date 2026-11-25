@@ -443,7 +443,7 @@
           <p>⚠ Complete encapsulation and decapsulation above first.</p>
         </div>
         <div id="aes-section" style="display:none;">
-          <p>The shared secret K is now used as a symmetric key for <strong>AES-256-GCM</strong> encryption via the Web Crypto API.</p>
+          <p>Alice encrypts with the secret from encapsulation. Bob decrypts with the secret from decapsulation. Both steps use <strong>AES-256-GCM</strong> through the Web Crypto API.</p>
           <div class="aes-demo">
             <label for="aes-plaintext">Message to encrypt:</label>
             <input type="text" id="aes-plaintext" class="text-input" placeholder="Hello, post-quantum world!" autocomplete="off" aria-describedby="aes-help" />

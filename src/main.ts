@@ -22,18 +22,27 @@ let sharedSecretForAes: Uint8Array | null = null;
 let stopDecoderViz: (() => void) | null = null;
 let kemGeneration = 0;
 let aesBusy = false;
+let aesRevision = 0;
 
 // --- Helpers ---
 function $(id: string): HTMLElement {
   return document.getElementById(id)!;
 }
 
+function clearMessageResult(): void {
+  aesRevision++;
+  aesBusy = false;
+  $('aes-output').replaceChildren();
+  const button = $('aes-encrypt-btn') as HTMLButtonElement;
+  button.textContent = 'Encrypt';
+  button.disabled = sharedSecretForAes === null;
+}
+
 function invalidateAes(): void {
   sharedSecretForAes = null;
-  $('aes-output').innerHTML = '';
+  clearMessageResult();
   $('aes-prereq').style.display = 'block';
   $('aes-section').style.display = 'none';
-  ($('aes-encrypt-btn') as HTMLButtonElement).disabled = true;
 }
 
 function invalidateEncapsulation(): void {
@@ -374,11 +383,14 @@ function initAes(): void {
   invalidateAes();
 
   const doEncrypt = async () => {
-    if (!sharedSecretForAes || aesBusy) return;
+    if (!currentEncap || !sharedSecretForAes || aesBusy) return;
     const secret = sharedSecretForAes;
     const generation = kemGeneration;
-    const msg = input.value.trim();
-    if (!msg) {
+    const senderSecret = currentEncap.sharedSecret;
+    const revision = aesRevision;
+    const current = () => revision === aesRevision && generation === kemGeneration && sharedSecretForAes === secret;
+    const msg = input.value;
+    if (!msg.trim()) {
       output.innerHTML = '<p class="error-text" role="alert">Please enter a message to encrypt.</p>';
       return;
     }
@@ -388,8 +400,8 @@ function initAes(): void {
     btn.textContent = 'Encrypting…';
 
     try {
-      const result = await aesEncryptDecrypt(secret, msg);
-      if (generation !== kemGeneration || sharedSecretForAes !== secret) return;
+      const result = await aesEncryptDecrypt(senderSecret, msg, secret);
+      if (!current()) return;
 
       output.innerHTML = `
         <div class="output-section">
@@ -406,15 +418,18 @@ function initAes(): void {
         </div>
       `;
     } catch (err) {
-      if (generation !== kemGeneration || sharedSecretForAes !== secret) return;
+      if (!current()) return;
       output.innerHTML = `<p class="error-text" role="alert">Encryption failed: ${escapeHtml(String(err))}</p>`;
     } finally {
-      aesBusy = false;
-      btn.disabled = sharedSecretForAes === null;
-      btn.textContent = 'Encrypt';
+      if (current()) {
+        aesBusy = false;
+        btn.disabled = false;
+        btn.textContent = 'Encrypt';
+      }
     }
   };
 
+  input.addEventListener('input', clearMessageResult);
   btn.addEventListener('click', doEncrypt);
   input.addEventListener('keydown', (e: KeyboardEvent) => {
     if (e.key === 'Enter') doEncrypt();

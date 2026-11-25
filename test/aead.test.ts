@@ -80,6 +80,14 @@ describe('aesEncryptDecrypt, the sealing step', () => {
     expect(hex(r.ciphertext).length).toBe(new TextEncoder().encode('the syndrome decoded').length + 16);
   });
 
+  it('opens the exact message with the recipient secret and rejects a mismatched recipient', async () => {
+    const message = '\uFEFF  Catalog α  ';
+    const bob = secret();
+    expect((await aesEncryptDecrypt(secret(), message, bob)).plaintext).toBe(message);
+    bob[31] ^= 1;
+    await expect(aesEncryptDecrypt(secret(), message, bob)).rejects.toThrow();
+  });
+
   it('a wrong shared secret fails closed rather than returning plaintext', async () => {
     const r = await aesEncryptDecrypt(secret(), 'fail closed');
     const wrong = secret(); wrong[31] ^= 1;

@@ -777,30 +777,31 @@ export interface AesResult {
 }
 
 export async function aesEncryptDecrypt(
-  sharedSecret: Uint8Array,
+  senderSecret: Uint8Array,
   message: string,
+  recipientSecret: Uint8Array = senderSecret,
 ): Promise<AesResult> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    sharedSecret as unknown as BufferSource,
-    { name: 'AES-GCM' },
-    false,
-    ['encrypt', 'decrypt'],
-  );
+  const importAesKey = (secret: Uint8Array, usage: 'encrypt' | 'decrypt') =>
+    crypto.subtle.importKey('raw', secret as unknown as BufferSource, 'AES-GCM', false, [usage]);
+  const [senderKey, recipientKey] = await Promise.all([
+    importAesKey(senderSecret, 'encrypt'),
+    importAesKey(recipientSecret, 'decrypt'),
+  ]);
 
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
+  // U+FEFF at the start of a student's message is part of its plaintext.
+  const decoder = new TextDecoder('utf-8', { ignoreBOM: true });
 
   const encrypted = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
-    key,
+    senderKey,
     encoder.encode(message),
   );
 
   const decrypted = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv },
-    key,
+    recipientKey,
     encrypted,
   );
 

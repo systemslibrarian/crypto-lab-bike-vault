@@ -726,6 +726,8 @@ main {
 }
 
 .decrypted-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--success);

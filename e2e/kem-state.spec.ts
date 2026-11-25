@@ -87,3 +87,19 @@ test('an old asynchronous AES result cannot repaint after a new encapsulation', 
   await expect(page.locator('#aes-encrypt-btn')).toHaveText('Encrypt');
   await unavailable(page);
 });
+
+
+test('AES evidence belongs to the current message, including its exact whitespace', async ({ page }) => {
+  await establish(page);
+  const input = page.locator('#aes-plaintext');
+  const output = page.locator('#aes-output');
+  const message = '\uFEFF  Catalog α  ';
+  await input.fill(message);
+  await expect(output).toBeEmpty();
+  await page.locator('#aes-encrypt-btn').click();
+  await expect.poll(() => output.locator('.decrypted-text').textContent()).toBe(`"${message}"`);
+  await input.fill('   ');
+  await expect(output).toBeEmpty();
+  await page.locator('#aes-encrypt-btn').click();
+  await expect(output.getByRole('alert')).toContainText('enter a message');
+});
