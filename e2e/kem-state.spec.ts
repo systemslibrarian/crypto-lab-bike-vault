@@ -98,6 +98,15 @@ test('AES evidence belongs to the current message, including its exact whitespac
   await expect(output).toBeEmpty();
   await page.locator('#aes-encrypt-btn').click();
   await expect.poll(() => output.locator('.decrypted-text').textContent()).toBe(`"${message}"`);
+  await expect(output).toContainText('recovered text matches the input');
+  await input.evaluate((el: HTMLInputElement) => {
+    el.value = 'A' + String.fromCharCode(0xd800) + 'B';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.locator('#aes-encrypt-btn').click();
+  await expect(output.getByRole('alert')).toContainText('recovered text differs');
+  await expect(output.locator('.decrypted-text')).toHaveText('"A�B"');
+  await expect(output).not.toContainText('matches the input');
   await input.fill('   ');
   await expect(output).toBeEmpty();
   await page.locator('#aes-encrypt-btn').click();

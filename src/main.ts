@@ -414,7 +414,9 @@ function initAes(): void {
           <h4>Decrypted</h4>
           <p class="decrypted-text">"${escapeHtml(result.plaintext)}"</p>
 
-          <p class="meta">End-to-end: BIKE KEM → shared secret → AES-256-GCM → plaintext ✓</p>
+          ${result.plaintext === msg
+            ? '<p class="meta">AES-GCM authenticated the ciphertext. The recovered text matches the input ✓</p>'
+            : '<p class="error-text" role="alert">AES-GCM authenticated the ciphertext. UTF-8 encoding replaced an unpaired surrogate, so the recovered text differs from the input.</p>'}
         </div>
       `;
     } catch (err) {

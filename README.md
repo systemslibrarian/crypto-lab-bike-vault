@@ -8,6 +8,8 @@ Rather than describe BIKE's mechanisms in prose alone, the demo lets you watch t
 
 Parameters: the page runs the BIKE Level 1 *structure* at reduced parameters (r = 587, w = 14, t = 13) so everything completes instantly in a browser. Spec BIKE Level 1 is r = 12,323, w = 142, t = 134 with a design DFR below 2⁻¹²⁸; the reduced parameters here measure around 0.5% (≈ 2⁻⁷·⁶), and the page says so wherever it quotes either number.
 
+The message panel demonstrates key establishment followed by authenticated encryption in one browser. It uses a reduced teaching model of BIKE. Peer identity and replay handling belong to the surrounding protocol. [NIST SP 800-227, Recommendations for Key-Encapsulation Mechanisms](https://csrc.nist.gov/pubs/sp/800/227/final).
+
 ## When to Use It
 
 - Evaluate code-based post-quantum KEM behavior in a browser demo. This fits when you want to inspect BIKE flow and outputs without deploying native crypto toolchains.
